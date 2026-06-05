@@ -1,7 +1,7 @@
 # Faith & Fast E-commerce - Final Audit & Deployment Report
 
 ## 1. Executive Summary
-Faith & Fast is a sophisticated MERN-stack e-commerce platform featuring high-end animations (Framer Motion, GSAP), robust state management (Redux Toolkit), and integrated payment services (Razorpay). While the project is visually complete and feature-rich, the deployment is currently failing due to configuration mismatches, and several critical logic bugs in the backend prevent it from being production-ready. This report details the root causes and provides the exact fixes required for a successful launch.
+Faith & Fast is a sophisticated MERN-stack e-commerce platform featuring high-end animations (Framer Motion, GSAP), robust state management (Redux Toolkit), and a Cash on Delivery (COD) order flow. While the project is visually complete and feature-rich, the deployment is currently failing due to configuration mismatches, and several critical logic bugs in the backend prevent it from being production-ready. This report details the root causes and provides the exact fixes required for a successful launch.
 
 **Deployment Readiness Score: 5/10** (Due to current 404 deployment error and critical backend bugs).
 
@@ -12,11 +12,11 @@ Faith & Fast is a sophisticated MERN-stack e-commerce platform featuring high-en
 ### Tech Stack
 - **Frontend**: React 18, Vite, Redux Toolkit, Tailwind CSS (v4), Framer Motion, GSAP, Material UI.
 - **Backend**: Node.js, Express, MongoDB/Mongoose.
-- **Third-Party Services**: Razorpay (Payments), Cloudinary (Media), Brevo (Email/OTP).
+- **Third-Party Services**: Cloudinary (Media), Brevo (Email/OTP).
 
 ### Workflows
 - **Authentication**: JWT-based. Tokens are generated on the server and currently stored in `localStorage` on the client. Includes an OTP-based email verification flow.
-- **Payment Flow**: Integrated with Razorpay. Orders are created in a `PENDING` state, verified via signature or webhook, and updated to `COMPLETED`.
+- **Payment Flow**: Cash on Delivery (COD). Orders are created in a `PENDING` state and updated by Admin.
 - **Admin Workflow**: Features a dedicated dashboard for user management, product CRUD, and order status tracking.
 - **User Workflow**: Includes product discovery, advanced filtering, cart/wishlist management, and an order tracking system.
 
@@ -103,10 +103,6 @@ CLOUDINARY_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
-# Payment Gateway (Razorpay)
-RAZORPAY_KEY_ID=rzp_live_xxx
-RAZORPAY_KEY_SECRET=xxx
-RAZORPAY_WEBHOOK_SECRET=xxx
 
 # Email Service (Brevo)
 BREVO_API_KEY=xkeysib-xxx
@@ -117,7 +113,6 @@ BREVO_API_KEY=xkeysib-xxx
 ### Frontend .env.example
 ```env
 VITE_BACKEND_URL=https://your-api-url.com
-VITE_RAZORPAY_KEY_ID=rzp_live_xxx
 ```
 
 ---
@@ -188,7 +183,7 @@ userRouter.post("/resend-otp", resendOtp);
 
 ### Roadmap
 - **v1.0**: Production stabilization (Bug fixes, Env setup, Secure Cookies).
-- **v1.5**: Enhancements (Inventory alerts, SMS notifications, Cashfree integration).
+- **v1.5**: Enhancements (Inventory alerts, SMS notifications, Razorpay/Stripe integration).
 - **v2.0**: Advanced (AI recommendations, PWA, Multi-vendor support).
 
 ---

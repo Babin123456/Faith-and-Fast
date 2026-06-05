@@ -9,7 +9,7 @@ Faith & Fast is a full-stack e-commerce application built with the MERN stack (M
 - **Frontend**: React.js with Vite, Redux Toolkit for state management, Tailwind CSS for styling, and Framer Motion for animations.
 - **Backend**: Node.js with Express, MongoDB with Mongoose for data modeling.
 - **Authentication**: JWT-based authentication with secure cookie and header handling.
-- **Payments**: Razorpay integration for secure online transactions.
+- **Payments**: Cash on Delivery (COD) order flow.
 - **File Storage**: Cloudinary for product and user avatar images.
 
 ## Development Workflow
@@ -18,7 +18,6 @@ Faith & Fast is a full-stack e-commerce application built with the MERN stack (M
 - Node.js (v18 or later)
 - MongoDB account (or local installation)
 - Cloudinary account
-- Razorpay account
 - Brevo account (for emails)
 
 ### 2. Setup

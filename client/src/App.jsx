@@ -30,7 +30,6 @@ import VerifyEmail from "./pages/auth-page/VerifyEmail";
 import MyOrders from "./pages/my-profile/MyOrders";
 import OrderDetails from "./pages/my-profile/OrderDetails";
 import CreateOrder from "./pages/orders/Checkout";
-import PaymentPage from "./pages/orders/OnlinePaymentPage";
 import ProductUpdatePage from "./pages/admin/AdminUpdateProduct";
 import { useEffect } from "react";
 import { getCartItems } from "./store/add-to-cart/addToCart";
@@ -95,14 +94,6 @@ const App = () => {
           element={
             <ProtectedRoute>
               <CreateOrder />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/online/payment"
-          element={
-            <ProtectedRoute>
-              <PaymentPage />
             </ProtectedRoute>
           }
         />

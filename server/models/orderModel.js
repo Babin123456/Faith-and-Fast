@@ -69,8 +69,8 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["COD", "ONLINE"],
-      required: true,
+      enum: ["COD"],
+      default: "COD",
     },
     orderStatus: {
       type: String,
@@ -98,10 +98,6 @@ const orderSchema = new mongoose.Schema(
     ],
     deliveryDate: { type: String, default: "To be delivered" },
     trackingId: {
-      type: String,
-      default: "",
-    },
-    transactionId: {
       type: String,
       default: "",
     },

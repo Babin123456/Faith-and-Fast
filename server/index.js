@@ -75,10 +75,8 @@ import cartRouter from "./route/cartRoute.js";
 import categoryRouter from "./route/categoryRoute.js";
 import discountRouter from "./route/discountRoutes.js";
 import orderRouter from "./route/orderRoute.js";
-import paymentRouter from "./route/paymentRoute.js";
 import productRouter from "./route/productRoute.js";
 import userRouter from "./route/userRoute.js";
-import webhookRouter from "./route/webhookRoutes.js";
 import wishListRouter from "./route/wishListRoute.js";
 
 app.use("/api/address", addressRouter);
@@ -86,10 +84,8 @@ app.use("/api/cart", cartRouter);
 app.use("/api/category", categoryRouter);
 app.use("/api/discount", discountRouter);
 app.use("/api/order", orderRouter);
-app.use("/api/payment", paymentRouter);
 app.use("/api/product", productRouter);
 app.use("/api/user", userRouter);
-app.use("/api/webhook", webhookRouter);
 app.use("/api/wishlist", wishListRouter);
 
 connectDB().then(() => {

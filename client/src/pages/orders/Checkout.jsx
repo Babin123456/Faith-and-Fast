@@ -98,9 +98,10 @@ const CreateOrder = () => {
       return;
     }
     try {
+      // paymentMethod is fixed to COD in state initialization
       const result = await dispatch(createOrder(orderData)).unwrap();
       if (result) {
-        toast.success("Order created successfully!");
+        toast.success("Order placed successfully (Cash on Delivery)!");
         cartItems.forEach((item) => {
           dispatch(deleteCartItem(item._id));
         });
@@ -109,14 +110,8 @@ const CreateOrder = () => {
       }
     } catch (err) {
       toast.error(
-        "Failed to create order: " + (err.message || "Unknown error")
+        "Failed to place order: " + (err.message || "Unknown error")
       );
-    }
-  };
-
-  const handleURLChange = (event) => {
-    if (event.target.value === "Online") {
-      navigate("/online/payment");
     }
   };
 
@@ -251,18 +246,9 @@ const CreateOrder = () => {
               variants={itemVariants}
               className="relative bg-gray-50 dark:bg-gray-700 p-4 rounded-xl shadow-md"
             >
-              <select
-                name="paymentMethod"
-                value={orderData.paymentMethod}
-                onChange={(e) => {
-                  handleChange(e);
-                  handleURLChange(e);
-                }}
-                className="w-full p-3 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-300"
-              >
-                <option value="COD">Cash on Delivery</option>
-                <option value="Online">Online Payment (Razorpay)</option>
-              </select>
+              <div className="w-full p-3 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200">
+                Cash on Delivery (COD)
+              </div>
             </motion.div>
           </motion.div>
 

@@ -13,7 +13,7 @@ Faith & Fast is a modern e-commerce solution designed to provide users with a sm
 - **Secure Authentication**: JWT-based login/signup with email verification (OTP).
 - **Product Discovery**: Advanced search and filtering (category, color, size, price).
 - **Shopping Experience**: Dynamic cart, wishlist, and real-time product reviews.
-- **Order Management**: Comprehensive checkout flow (COD & Online), order tracking, and history.
+- **Order Management**: Comprehensive checkout flow (Cash on Delivery), order tracking, and history.
 - **Profile Management**: Address book, profile updates, and password security.
 
 ### Admin Features
@@ -26,7 +26,7 @@ Faith & Fast is a modern e-commerce solution designed to provide users with a sm
 ## Tech Stack
 - **Frontend**: React 18, Vite, Redux Toolkit, Tailwind CSS, Framer Motion, Material UI.
 - **Backend**: Node.js, Express, MongoDB, Mongoose.
-- **Services**: Cloudinary (Media), Razorpay (Payments), Brevo (Email), Vercel (Deployment).
+- **Services**: Cloudinary (Media), Brevo (Email), Vercel (Deployment).
 
 ## Folder Structure
 ```
@@ -66,7 +66,7 @@ cd ../server && npm install
 ```
 
 ### 3. Environment Variables
-Refer to `FINAL_AUDIT_REPORT.md` for a complete list of required production environment variables.
+Refer to the `.env.example` section below for the required environment variables.
 
 ### 4. Run the Project
 ```bash

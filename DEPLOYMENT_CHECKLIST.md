@@ -13,7 +13,6 @@ Follow these steps meticulously to transition the project from its current state
 - [ ] **Backend**:
     - [ ] Set `NODE_ENV=production`.
     - [ ] Update `FRONTEND_URL` to match the Vercel production domain.
-    - [ ] Verify `RAZORPAY_WEBHOOK_SECRET` matches your Razorpay dashboard setting.
     - [ ] Update `MONGODB_URL` to a production-grade cluster.
 
 ## 3. Vercel Frontend Settings
@@ -33,11 +32,10 @@ Follow these steps meticulously to transition the project from its current state
 
 ## 6. Pre-Flight Check
 - [ ] Run `npm run build` locally in the `client` directory.
-- [ ] Test the full Checkout flow (using Razorpay Test Mode) in the staging environment.
+- [ ] Test the full Checkout flow (COD) in the staging environment.
 - [ ] Verify Admin dashboard can create and update products without error.
 
 ## 7. Go Live
 - [ ] Deploy backend to Railway/Render.
 - [ ] Trigger final Vercel deployment.
-- [ ] Switch Razorpay to **Live Mode**.
 - [ ] Monitor logs for 24 hours for any `500` errors.
