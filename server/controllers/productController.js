@@ -152,7 +152,19 @@ export const getProductDetails = catchAsyncErrors(async (req, res) => {
 // Admin
 export const updateProductDetails = catchAsyncErrors(async (req, res) => {
   try {
-    const { images } = req.body;
+    const {
+      name,
+      description,
+      price,
+      category,
+      subcategory,
+      coloroptions,
+      size,
+      sizeoptions,
+      stock,
+      discount,
+      images,
+    } = req.body;
     const { _id } = req.params;
 
     if (!_id || !mongoose.isValidObjectId(_id)) {

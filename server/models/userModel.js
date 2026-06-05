@@ -51,6 +51,12 @@ const userSchema = new mongoose.Schema(
         ref: "cartProduct",
       },
     ],
+    shoppingWishList: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "wishListProduct",
+      },
+    ],
     orderHistory: [
       {
         type: mongoose.Schema.ObjectId,

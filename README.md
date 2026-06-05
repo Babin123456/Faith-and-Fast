@@ -28,10 +28,25 @@ Faith & Fast is a modern e-commerce solution designed to provide users with a sm
 - **Backend**: Node.js, Express, MongoDB, Mongoose.
 - **Services**: Cloudinary (Media), Razorpay (Payments), Brevo (Email), Vercel (Deployment).
 
-## Architecture
-The project follows a clean, modular architecture:
-- **Client**: Separated by pages, components, store (Redux slices), and api services.
-- **Server**: MVC pattern with dedicated routes, controllers, models, and middleware.
+## Folder Structure
+```
+.
+├── client/                 # Frontend React Application (Vite)
+│   ├── public/             # Static assets
+│   └── src/
+│       ├── api/            # Axios instance and interceptors
+│       ├── assets/         # Styles and local images
+│       ├── pages/          # Page components
+│       ├── store/          # Redux Toolkit slices
+│       └── App.jsx         # Main routing
+└── server/                 # Backend Node.js API
+    ├── config/             # DB and Service configurations
+    ├── controllers/        # Request logic
+    ├── middleware/         # Security and Auth middlewares
+    ├── models/             # Mongoose schemas
+    ├── route/              # API routes
+    └── utils/              # Helpers and templates
+```
 
 ## Installation
 
@@ -51,27 +66,7 @@ cd ../server && npm install
 ```
 
 ### 3. Environment Variables
-Create a `.env` file in the `server` directory:
-```env
-PORT=5000
-MONGODB_URL=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRE=3d
-COOKIE_EXPIRE=5
-CLOUDINARY_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-RAZORPAY_KEY_ID=your_razorpay_id
-RAZORPAY_KEY_SECRET=your_razorpay_secret
-BREVO_API_KEY=your_brevo_key
-FRONTEND_URL=http://localhost:5173
-```
-
-Create a `.env` file in the `client` directory:
-```env
-VITE_BACKEND_URL=http://localhost:5000
-VITE_RAZORPAY_KEY_ID=your_razorpay_id
-```
+Refer to `FINAL_AUDIT_REPORT.md` for a complete list of required production environment variables.
 
 ### 4. Run the Project
 ```bash
@@ -82,45 +77,20 @@ npm run dev
 npm run dev
 ```
 
-## Folder Structure
-```
-.
-├── client/                 # Frontend React Application
-│   ├── public/             # Static assets
-│   └── src/
-│       ├── api/            # Axios instance and API calls
-│       ├── assets/         # Images and icons
-│       ├── pages/          # Page components (Admin, Auth, Products, etc.)
-│       ├── store/          # Redux Toolkit slices
-│       └── App.jsx         # Main application component
-└── server/                 # Backend Node.js Application
-    ├── config/             # Database, Razorpay, and Email configs
-    ├── controllers/        # Request handlers
-    ├── middleware/         # Auth, Admin, and Error middlewares
-    ├── models/             # Mongoose schemas
-    ├── route/              # API route definitions
-    ├── utils/              # Helper functions and templates
-    └── index.js            # Server entry point
-```
+## Deployment Guide
 
-## API Documentation
+### Vercel (Frontend)
+1. Import the repository to Vercel.
+2. Set **Root Directory** to `client`.
+3. Configure the following **Build Settings**:
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+4. Add all required `VITE_` environment variables.
 
-### Auth & User
-- `POST /api/user/register` - User registration
-- `POST /api/user/login` - User login
-- `GET /api/user/me` - Get current user details
-- `PUT /api/user/update-user` - Update profile
-
-### Products
-- `GET /api/product/get` - List products with pagination
-- `GET /api/product/get/:productId` - Product details
-- `POST /api/product/create` - Create product (Admin)
-- `PUT /api/product/update/:_id` - Update product (Admin)
-
-### Orders & Payments
-- `POST /api/order/create` - Create new order
-- `GET /api/order/myorder` - User's order history
-- `POST /api/payment/razorpay/order` - Create Razorpay order
+### Backend
+1. Deploy to **Railway** or **Render**.
+2. Set the start command to `node index.js`.
+3. Add all required backend environment variables.
 
 ## Contributing
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.

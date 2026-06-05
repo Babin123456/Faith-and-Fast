@@ -38,7 +38,7 @@ export const addToWishListItemController = catchAsyncErrors(
 
       const updateWishListUser = await UserModel.updateOne(
         { _id: userId },
-        { $addToSet: { shopping_WishList: productId } }
+        { $addToSet: { shoppingWishList: savedWishListItem._id } }
       );
 
       if (updateWishListUser.modifiedCount === 0) {

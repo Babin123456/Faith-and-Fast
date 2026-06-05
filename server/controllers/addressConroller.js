@@ -45,7 +45,7 @@ export const addAddress = catchAsyncErrors(async (req, res) => {
     await UserModel.findByIdAndUpdate(
       userId,
       {
-        $push: { address_details: savedAddress._id },
+        $push: { addressDetails: savedAddress._id },
       },
       { new: true }
     );

@@ -26,7 +26,7 @@ userRouter.post("/register", registerUser);
 
 userRouter.post("/verify-email", verifyEmailOtp);
 
-userRouter.post("/resend-otp", verifyEmailOtp);
+userRouter.post("/resend-otp", resendOtp);
 
 userRouter.post("/login", loginUser);
 

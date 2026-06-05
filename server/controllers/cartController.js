@@ -28,7 +28,7 @@ export const addToCartItemController = catchAsyncErrors(async (req, res) => {
       { _id: userId },
       {
         $addToSet: {
-          shopping_cart: productId,
+          shoppingCart: savedCartItem._id,
         },
       }
     );
