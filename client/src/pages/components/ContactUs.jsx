@@ -10,13 +10,13 @@ const ContactUs = () => {
     const dummyData = {
       contact_details: {
         email: "support@faithandfast.com",
-        phone: "+91 9661492329",
-        whatsapp: "9661492329",
-        address: "West Champaran-845438, Bettiah",
+        phone: "+91 9999999999",
+        whatsapp: "9999999999",
+        address: "India",
       },
       social_links: {
-        whatsapp_link: "9661492329",
-        phone_link: "tel:+919661492329",
+        whatsapp_link: "9999999999",
+        phone_link: "tel:+919999999999",
         email_link: "mailto:support@faithandfast.com",
       },
       seo_meta: {
@@ -75,7 +75,7 @@ const ContactUs = () => {
               </p>
               <a
                 className="flex items-center text-lg hover:text-yellow-500 dark:hover:text-red-500 transition"
-                href="tel:+919661492329"
+                href="tel:+919999999999"
               >
                 <Phone className="w-6 h-6 text-yellow-500 dark:text-red-500 mr-3" />
                 <span>{contactData.contact_details.phone}</span>

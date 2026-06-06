@@ -8,6 +8,7 @@ import {
   loginUser,
   logoutUser,
   registerUser,
+  resendOtp,
   resetPassword,
   updateUserDetails,
   updateUserRole,
