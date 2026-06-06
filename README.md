@@ -158,6 +158,27 @@ npm run seed-admin
 2. Set the start command to `node index.js`.
 3. Add all required backend environment variables.
 
+## ELUSOC 2026 Contribution Guide
+
+#### Target Branch
+All ELUSOC contributions must target the `elusoc` branch.
+
+#### Contribution Workflow
+Issue → Assignment → Development → PR to `elusoc` → Review → Merge
+
+#### Labels
+- `newbie`
+- `adventurer`
+- `veteran`
+- `elusoc`
+
+#### Important Rules
+- Check existing issues before creating new ones.
+- Do not create duplicate issues.
+- Do not submit pull requests without issue assignment.
+- Resolve merge conflicts before submitting PRs.
+- Follow project coding standards and contribution guidelines.
+
 ## Contributing
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) and [FAITH_FAST_ISSUES.md](FAITH_FAST_ISSUES.md) for more details.
 

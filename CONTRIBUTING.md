@@ -47,15 +47,16 @@ Faith & Fast is a full-stack e-commerce application built with the MERN stack (M
 ## Branching Strategy
 We follow a structured branching model:
 - `main`: Production-ready code.
-- `dev`: Integration branch for new features.
+- `elusoc`: Target branch for ELUSOC 2026 contributions.
+- `dev`: Integration branch for other features.
 - `feature/*`: New feature development.
 - `bugfix/*`: Bug fixes.
 - `hotfix/*`: Urgent production fixes.
 
 ## Pull Request Process
-1. Create a new branch from `dev`.
+1. Create a new branch from `elusoc` (for ELUSOC contributions) or `dev`.
 2. Commit your changes with descriptive messages.
-3. Push to your branch and open a PR against `dev`.
+3. Push to your branch and open a PR against the appropriate target branch.
 4. Ensure all tests pass and obtain at least one peer review.
 
 ## Commit Message Convention
