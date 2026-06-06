@@ -7,29 +7,7 @@ import MetaData from "./MetaData";
 const faqs = [
   {
     question: "What payment methods do you accept?",
-    answer: "We accept payment through Razorpay and cash on delivery.",
-  },
-  {
-    question: "What payment methods does Razorpay accept in India?",
-    answer:
-      "Razorpay supports credit/debit cards, UPI, Net Banking, Wallets, and EMI options.",
-  },
-  {
-    question: "What is Razorpay?",
-    answer: (
-      <>
-        Razorpay is a secure online payment gateway that allows you to make fast
-        and safe transactions. Learn more on their official website:{" "}
-        <a
-          href="https://razorpay.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-indigo-500 dark:text-indigo-400 hover:underline"
-        >
-          Razorpay.com
-        </a>
-      </>
-    ),
+    answer: "We currently accept Cash on Delivery (COD).",
   },
   {
     question: "What is Cash on Delivery?",

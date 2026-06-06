@@ -165,7 +165,7 @@ const Products = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
       <MetaData
         title="Shop Latest Trends | Faith AND Fast - Fashion, Accessories & More"
-        description="Discover the latest fashion trends at Faith AND Fast. Shop stylish clothing, accessories, and more with fast delivery and secure payments. Find your perfect look today!"
+        description="Discover the latest fashion trends at Faith AND Fast. Shop stylish clothing, accessories, and more with fast delivery and Cash on Delivery. Find your perfect look today!"
         keywords="Faith AND Fast products, online fashion store, trendy clothing, buy accessories, latest fashion, shop online, best fashion deals"
       />
 

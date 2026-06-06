@@ -51,20 +51,7 @@ const TermsAndServices = () => {
 
           <Section
             title="4. Orders & Payments"
-            content={
-              <>
-                We accept payments through{" "}
-                <a
-                  href="https://razorpay.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-yellow-500 dark:text-red-600 font-medium hover:underline transition-colors duration-200"
-                >
-                  Razorpay
-                </a>{" "}
-                and Cash on Delivery. Prices may change at any time.
-              </>
-            }
+            content="We currently accept Cash on Delivery (COD). Prices may change at any time."
           />
 
           <Section

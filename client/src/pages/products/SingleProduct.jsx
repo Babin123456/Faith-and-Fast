@@ -227,7 +227,7 @@ const ProductDetails = ({ products }) => {
       >
         <MetaData
           title={`${product?.name} | Buy Online at Faith AND Fast`}
-          description={`Get ${product?.name} at the best price on Faith AND Fast. ${product?.description}. Fast shipping & secure payment options available!`}
+          description={`Get ${product?.name} at the best price on Faith AND Fast. ${product?.description}. Fast shipping & Cash on Delivery available!`}
           keywords={`${product?.name}, buy ${product?.name} online, Faith AND Fast, ${product?.category}, best price ${product?.name}, shop ${product?.name}, latest ${product?.category}`}
         />
 

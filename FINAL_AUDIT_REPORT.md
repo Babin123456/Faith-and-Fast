@@ -183,7 +183,7 @@ userRouter.post("/resend-otp", resendOtp);
 
 ### Roadmap
 - **v1.0**: Production stabilization (Bug fixes, Env setup, Secure Cookies).
-- **v1.5**: Enhancements (Inventory alerts, SMS notifications, Razorpay/Stripe integration).
+- **v1.5**: Enhancements (Inventory alerts, SMS notifications, Online payment integration).
 - **v2.0**: Advanced (AI recommendations, PWA, Multi-vendor support).
 
 ---

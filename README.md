@@ -65,8 +65,33 @@ cd client && npm install
 cd ../server && npm install
 ```
 
-### 3. Environment Variables
-Refer to the `.env.example` section below for the required environment variables.
+### 3. Environment Setup
+
+Create a `.env` file in the `server` directory:
+```env
+PORT=5000
+MONGODB_URL=mongodb+srv://<username>:<password>@cluster.mongodb.net/faith-fast
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRE=3d
+COOKIE_EXPIRE=5
+CLOUDINARY_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+BREVO_API_KEY=your_brevo_key
+FRONTEND_URL=http://localhost:5173
+```
+
+#### MongoDB Atlas Setup
+1. Create a free cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+2. Create a database user with read/write permissions.
+3. In "Network Access", allow access from your IP address.
+4. Go to "Clusters" -> "Connect" -> "Connect your application".
+5. Copy the connection string and replace `<username>`, `<password>`, and `cluster.mongodb.net` in your `MONGODB_URL`.
+
+Create a `.env` file in the `client` directory:
+```env
+VITE_BACKEND_URL=http://localhost:5000
+```
 
 ### 4. Run the Project
 ```bash
@@ -77,23 +102,64 @@ npm run dev
 npm run dev
 ```
 
+## Cash on Delivery (COD) Payment Flow
+
+Current Payment Method:
+**Cash on Delivery (COD)**
+
+- Users can place orders without an upfront online payment.
+- Orders are initially marked as `PENDING`.
+- Admins can update the payment status to `COMPLETED` upon physical collection of funds.
+
+### Future Payment Gateway Integration
+Future payment gateway integration is planned.
+
+Contributors are encouraged to research and suggest payment providers that:
+
+- Support Indian businesses
+- Provide a test/sandbox mode
+- Require minimal setup during development
+- Preferably do not require mandatory KYC for local testing and development
+
+The payment architecture should remain modular so that future gateways can be integrated easily.
+
+## Local Admin Access
+To test admin features locally, you need an account with the `ADMIN` role.
+
+### Method 1: Seeding (Recommended)
+We provide a script to create a default admin account in your local database.
+```bash
+cd server
+npm run seed-admin
+```
+**Credentials:**
+- **Email**: `admin@faithandfast.com`
+- **Password**: `Admin@123`
+
+### Method 2: Manual Promotion
+1. Register a normal user through the application UI.
+2. Open your MongoDB management tool (e.g., MongoDB Compass or Atlas UI).
+3. Find your user document in the `users` collection.
+4. Change the `role` field from `"USER"` to `"ADMIN"`.
+5. Log out and log back in on the frontend.
+
 ## Deployment Guide
 
 ### Vercel (Frontend)
 1. Import the repository to Vercel.
 2. Set **Root Directory** to `client`.
-3. Configure the following **Build Settings**:
+3. Configure **Build Settings**:
    - Build Command: `npm run build`
    - Output Directory: `dist`
 4. Add all required `VITE_` environment variables.
 
 ### Backend
-1. Deploy to **Railway** or **Render**.
+1. Deploy to **Railway**, **Render**, or a VPS.
 2. Set the start command to `node index.js`.
 3. Add all required backend environment variables.
 
 ## Contributing
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) and [FAITH_FAST_ISSUES.md](FAITH_FAST_ISSUES.md) for more details.
 
 ## License
 This project is licensed under the ISC License.

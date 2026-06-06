@@ -46,20 +46,7 @@ const PrivacyPolicy = () => {
 
           <Section
             title="3. Payment Security"
-            content={
-              <>
-                Payments are securely processed through{" "}
-                <a
-                  href="https://razorpay.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-yellow-500 dark:text-red-600 font-medium hover:underline transition-colors duration-200"
-                >
-                  Razorpay
-                </a>
-                . We do not store your payment details on our servers.
-              </>
-            }
+            content="We currently support Cash on Delivery (COD). No online payment information is collected or stored on our servers."
           />
 
           <Section
