@@ -154,7 +154,7 @@ npm run seed-admin
 4. Add all required `VITE_` environment variables.
 
 ### Backend
-1. Deploy to **Railway**, **Render**, or a VPS.
+1. Deploy to Vercel.
 2. Set the start command to `node index.js`.
 3. Add all required backend environment variables.
 
