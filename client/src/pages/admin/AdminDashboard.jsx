@@ -6,6 +6,7 @@ import {
   Package,
   Menu,
   X,
+  BarChart3,
 } from "lucide-react";
 import AdminUsers from "./AdminUsers";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +14,7 @@ import AdminProducts from "./AdminProducts";
 import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import AdminOrdersPage from "./AdminOrdersPage";
+import AdminAnalytics from "./AdminAnalytics";
 
 const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -46,6 +48,8 @@ const AdminDashboard = () => {
         return <AdminProducts />;
       case "Orders":
         return <AdminOrdersPage />;
+      case "Analytics":
+        return <AdminAnalytics />;
 
       default:
         return null;
@@ -73,6 +77,7 @@ const AdminDashboard = () => {
             { icon: Users, text: "Customers", path: "/admin/users" },
             { icon: ShoppingBag, text: "Products" },
             { icon: Package, text: "Orders" },
+            { icon: BarChart3, text: "Analytics" },
           ].map((item) => (
             <button
               key={item.text}
