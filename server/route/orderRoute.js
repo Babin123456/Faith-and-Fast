@@ -11,6 +11,7 @@ import {
   updateOrderStatus,
 } from "../controllers/orderController.js";
 import admin from "../middleware/Admin.js";
+import { getOrderAnalytics } from "../controllers/analyticsController.js";
 
 const orderRouter = express.Router();
 
@@ -19,6 +20,8 @@ orderRouter.post("/create", auth, createOrder);
 orderRouter.get("/myorder", auth, myOrders);
 
 orderRouter.get("/get/admin", auth, admin, getAllOrders);
+
+orderRouter.get("/admin/analytics", auth, admin, getOrderAnalytics);
 
 orderRouter.get("/get/:orderId", auth, getSingleOrder);
 

@@ -13,6 +13,7 @@ import orderReducer from "./order-slice/order";
 import discountReducer from "./extra-slice/discount";
 import onlineReducer from "./order-slice/order";
 import adminOrdersReducer from "./order-slice/AdminOrderSlice";
+import adminAnalyticsReducer from "./order-slice/analyticsSlice";
 
 const store = configureStore({
   reducer: {
@@ -29,7 +30,8 @@ const store = configureStore({
     order: orderReducer,
     discount: discountReducer,
     online: onlineReducer,
-    adminOrders: adminOrdersReducer
+    adminOrders: adminOrdersReducer,
+    adminAnalytics: adminAnalyticsReducer,
   },
 });
 
