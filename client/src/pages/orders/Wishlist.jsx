@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button, CircularProgress } from "@mui/material";
+import { Button } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
   deleteWishListItem,
@@ -9,6 +9,7 @@ import {
 } from "@/store/add-to-wishList/addToWishList";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import WishlistSkeleton from "../components/skeletons/WishlistSkeleton";
 
 const WishlistPage = () => {
   const dispatch = useDispatch();
@@ -32,15 +33,10 @@ const WishlistPage = () => {
         My Wishlist
       </h1>
 
-      {loading && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-gray-500 text-center mb-4"
-        >
-          <CircularProgress />
-        </motion.p>
-      )}
+      {loading ? (
+        <WishlistSkeleton />
+      ) : (
+        <>
       {error && (
         <motion.p
           initial={{ opacity: 0 }}
@@ -109,7 +105,10 @@ const WishlistPage = () => {
           )}
         </AnimatePresence>
       </div>
+      </>
+      )}
     </div>
+
   );
 };
 
