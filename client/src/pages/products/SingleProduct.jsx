@@ -10,6 +10,7 @@ import {
 } from "@/store/product-slice/productDetails";
 import ImageSlider from "./ImageSlider";
 import ProductCard from "./ProductCard";
+import ProductDetailsSkeleton from "../components/skeletons/ProductDetailsSkeleton";
 import MetaData from "../extras/MetaData";
 import { Button, Rating } from "@mui/material";
 import { Heart, ShoppingCartIcon } from "lucide-react";
@@ -233,13 +234,7 @@ const ProductDetails = ({ products }) => {
 
         <AnimatePresence>
           {loading ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex justify-center items-center h-96"
-            >
-              <div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-yellow-500"></div>
-            </motion.div>
+            <ProductDetailsSkeleton />
           ) : error ? (
             <motion.div
               initial={{ opacity: 0 }}
