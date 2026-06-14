@@ -10,6 +10,7 @@ import {
 } from "@/store/product-slice/productDetails";
 import ImageSlider from "./ImageSlider";
 import ProductCard from "./ProductCard";
+import RecentlyViewed from "../components/RecentlyViewed";
 import ProductDetailsSkeleton from "../components/skeletons/ProductDetailsSkeleton";
 import MetaData from "../extras/MetaData";
 import { Button, Rating } from "@mui/material";
@@ -38,6 +39,7 @@ const ProductDetails = ({ products }) => {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [visibleReviews, setVisibleReviews] = useState([]);
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -103,6 +105,33 @@ const ProductDetails = ({ products }) => {
       dispatch(getSimilarProducts(product.category));
     }
   }, [dispatch, product]);
+
+  useEffect(() => {
+    if (product && product._id) {
+      let viewedProducts =
+        JSON.parse(localStorage.getItem("recentlyViewed")) || [];
+
+      viewedProducts = viewedProducts.filter(
+        (item) => item._id !== product._id
+      );
+
+      viewedProducts.unshift(product);
+
+      viewedProducts = viewedProducts.slice(0, 8);
+
+      localStorage.setItem(
+        "recentlyViewed",
+        JSON.stringify(viewedProducts)
+      );
+
+      const filteredViewed = viewedProducts.filter(
+        (item) => item._id !== product._id
+      );
+
+      setRecentlyViewed(filteredViewed);
+    }
+  }, [product]);
+
 
   useEffect(() => {
     const combined = [...(similarProducts || []), ...(products || [])];
@@ -626,6 +655,7 @@ const ProductDetails = ({ products }) => {
                   ))}
                 </div>
               </motion.section>
+              <RecentlyViewed products={recentlyViewed} />
             </div>
           )}
         </AnimatePresence>
