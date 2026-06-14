@@ -13,6 +13,7 @@ import colors from "../extras/Colors";
 import sizes from "../extras/Size";
 import PropTypes from "prop-types";
 import MetaData from "../extras/MetaData";
+import ProductSkeleton from "../components/skeletons/ProductSkeleton";
 
 const FilterSection = ({ title, items, selected, onSelect, children }) => (
   <motion.div
@@ -64,7 +65,9 @@ const Products = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { product = [], totalPages } = useSelector((state) => state.product);
+  const { product = [], totalPages, loading } = useSelector(
+    (state) => state.product
+  );
   const [shuffledProducts, setShuffledProducts] = useState([]);
 
   const handleFilterChange = (setter, value) => {
@@ -426,90 +429,104 @@ const Products = () => {
               className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
               <AnimatePresence>
-                {shuffledProducts.map((item) => (
-                  <motion.div
-                    key={item._id}
-                    layout
-                    variants={cardVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    whileHover={{
-                      scale: 1.05,
-                      boxShadow: "0 10px 20px rgba(0, 0, 0, 0.1)",
-                    }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden transition-all duration-300"
-                  >
-                    <div className="relative aspect-square">
-                      <img
-                        src={item.images[0]?.url}
-                        alt={item.name}
-                        className="w-full h-full object-fit cursor-pointer"
-                        onClick={() => navigate(`/product/${item._id}`)}
-                      />
-                      <div className="absolute bottom-3 right-3 flex flex-col gap-2">
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          className="p-2 bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white dark:hover:bg-gray-600 transition duration-200"
-                          onClick={() => handleAddWishList(item)}
-                        >
-                          <Heart className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                        </motion.button>
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          className="p-2 bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white dark:hover:bg-gray-600 transition duration-200"
-                          onClick={() => handleAddCart(item)}
-                        >
-                          <ShoppingCart className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                        </motion.button>
+                {loading ? (
+                  [...Array(8)].map((_, index) => (
+                    <ProductSkeleton key={index} />
+                  ))
+                ) : (
+                  shuffledProducts.map((item) => (
+                    <motion.div
+                      key={item._id}
+                      layout
+                      variants={cardVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      whileHover={{
+                        scale: 1.05,
+                        boxShadow: "0 10px 20px rgba(0, 0, 0, 0.1)",
+                      }}
+                      className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden transition-all duration-300"
+                    >
+                      <div className="relative aspect-square">
+                        <img
+                          src={item.images[0]?.url}
+                          alt={item.name}
+                          className="w-full h-full object-fit cursor-pointer"
+                          onClick={() => navigate(`/product/${item._id}`)}
+                        />
+
+                        <div className="absolute bottom-3 right-3 flex flex-col gap-2">
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            className="p-2 bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white dark:hover:bg-gray-600 transition duration-200"
+                            onClick={() => handleAddWishList(item)}
+                          >
+                            <Heart className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                          </motion.button>
+
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            className="p-2 bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white dark:hover:bg-gray-600 transition duration-200"
+                            onClick={() => handleAddCart(item)}
+                          >
+                            <ShoppingCart className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                          </motion.button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-lg mb-2 line-clamp-2 text-gray-800 dark:text-gray-100">
-                        {item.name}
-                      </h3>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                            ₹
-                            {(
-                              item.price -
-                              item.price * (item.discount / 100)
-                            ).toFixed(2)}
-                          </span>
-                          {item.discount > 0 && (
-                            <span className="text-sm line-through text-gray-500 dark:text-gray-400">
-                              ₹{item.price.toFixed(2)}
+
+                      <div className="p-4">
+                        <h3 className="font-semibold text-lg mb-2 line-clamp-2 text-gray-800 dark:text-gray-100">
+                          {item.name}
+                        </h3>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                              ₹
+                              {(
+                                item.price -
+                                item.price * (item.discount / 100)
+                              ).toFixed(2)}
                             </span>
-                          )}
-                          {item.discount > 0 && (
-                            <p className="text-md bg-white dark:bg-gray-900 text-black dark:text-white font-bold">
-                              {item.discount}% Off
-                            </p>
-                          )}
+
+                            {item.discount > 0 && (
+                              <span className="text-sm line-through text-gray-500 dark:text-gray-400">
+                                ₹{item.price.toFixed(2)}
+                              </span>
+                            )}
+
+                            {item.discount > 0 && (
+                              <p className="text-md bg-white dark:bg-gray-900 text-black dark:text-white font-bold">
+                                {item.discount}% Off
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <p className="text-lg text-green-500 dark:text-green-500 font-bold">
+                          Free Delivery
+                        </p>
+
+                        <div className="flex items-center mb-2">
+                          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
+                            <Star className="w-5 h-5 text-yellow-400" />
+
+                            <span className="text-md font-medium text-gray-700 dark:text-gray-200">
+                              {item.ratings
+                                ? `${item.ratings.toFixed(1)} `
+                                : "No ratings"}
+                            </span>
+
+                            <span className="text-sm text-gray-500 dark:text-gray-300">
+                              ({item.reviews?.length || 0} reviews)
+                            </span>
+                          </div>
                         </div>
                       </div>
-
-                      <p className="text-lg text-green-500 dark:text-green-500 font-bold">
-                        Free Delivery
-                      </p>
-
-                      <div className="flex items-center mb-2">
-                        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
-                          <Star className="w-5 h-5 text-yellow-400" />
-                          <span className="text-md font-medium text-gray-700 dark:text-gray-200">
-                            {item.ratings
-                              ? `${item.ratings.toFixed(1)} `
-                              : "No ratings"}
-                          </span>
-                          <span className="text-sm text-gray-500 dark:text-gray-300">
-                            ({item.reviews?.length || 0} reviews)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  ))
+                )}
               </AnimatePresence>
             </motion.div>
 

@@ -9,7 +9,8 @@ import {
   updateCartItemQty,
 } from "@/store/add-to-cart/addToCart";
 import MetaData from "../extras/MetaData";
-import { Button, IconButton, Skeleton } from "@mui/material";
+import CartSkeleton from "../components/skeletons/CartSkeleton";
+import { Button, IconButton } from "@mui/material";
 import { ShoppingCartCheckout } from "@mui/icons-material";
 
 const Cart = () => {
@@ -28,9 +29,9 @@ const Cart = () => {
     dispatch(getCartItems());
   }, [dispatch]);
 
-  if (loading)
-    return <Skeleton variant="rectangular" width="100%" height={300} />;
-
+  if (loading){
+    return <CartSkeleton />;
+  }
   const handleUpdateQty = (id, qty) => {
     if (qty > 0) {
       dispatch(updateCartItemQty({ _id: id, qty })).then(() => {
