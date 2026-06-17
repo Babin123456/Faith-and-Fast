@@ -8,14 +8,31 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (
-      error.response?.status === 401 &&
-      error.response?.data?.message === "Token expired, please login again"
-    ) {
+    const status = error.response?.status;
+    const message = error.response?.data?.message || "";
+
+    // Treat any 401 that signals an expired or invalid session as a logout
+    // trigger, rather than matching one exact server message. Clearing
+    // storage and doing a full redirect guarantees the Redux auth state is
+    // re-initialised (initialState re-reads the now-cleared token), so the
+    // user is logged out safely and consistently.
+    const isSessionExpired =
+      status === 401 &&
+      (/token expired/i.test(message) ||
+        /login again/i.test(message) ||
+        /jwt expired/i.test(message));
+
+    if (isSessionExpired) {
+      const hadToken = !!localStorage.getItem("token");
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.href = "/";
+      // Only redirect if the user was actually in a logged-in state, to avoid
+      // bouncing guests whose requests happened to 401.
+      if (hadToken && window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
+
     return Promise.reject(error);
   }
 );
