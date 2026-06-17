@@ -46,9 +46,14 @@ const App = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(getCartItems());
-    dispatch(getWishListItems());
-  }, [dispatch]);
+    // Only fetch cart and wishlist for authenticated users. Guests have no
+    // token, so these calls would 401 and surface as error states. Gating
+    // here also re-runs the fetch right after login (isAuthenticated flips).
+    if (isAuthenticated) {
+      dispatch(getCartItems());
+      dispatch(getWishListItems());
+    }
+  }, [dispatch, isAuthenticated]);
 
   return (
     <div className="flex flex-col bg-white dark:bg-black text-black dark:text-white">
