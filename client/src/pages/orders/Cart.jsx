@@ -10,6 +10,8 @@ import {
 } from "@/store/add-to-cart/addToCart";
 import MetaData from "../extras/MetaData";
 import CartSkeleton from "../components/skeletons/CartSkeleton";
+import RecommendationSection from "../components/RecommendationSection";
+import { getTrendingProducts } from "@/store/product-slice/productDetails";
 import { Button, IconButton } from "@mui/material";
 import { ShoppingCartCheckout } from "@mui/icons-material";
 
@@ -20,6 +22,7 @@ const Cart = () => {
   const navigate = useNavigate();
   const { cartItems = [], loading, error } = useSelector((state) => state.cart);
   const { discounts } = useSelector((state) => state.discount);
+  const { trendingProducts } = useSelector((state) => state.productDetails);
 
   useEffect(() => {
     setAppliedCoupon(null);
@@ -27,6 +30,7 @@ const Cart = () => {
 
   useEffect(() => {
     dispatch(getCartItems());
+    dispatch(getTrendingProducts(8));
   }, [dispatch]);
 
   if (loading){
@@ -239,6 +243,13 @@ const Cart = () => {
               </button>
             </motion.div>
           </div>
+        )}
+
+        {cartItems.length > 0 && (
+          <RecommendationSection
+            title="You May Also Like"
+            products={trendingProducts}
+          />
         )}
       </div>
     </>
