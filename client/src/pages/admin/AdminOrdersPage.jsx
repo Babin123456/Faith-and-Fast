@@ -20,6 +20,7 @@ import {
   getAllOrders,
   updateOrderStatus,
   deleteAllOrders,
+  verifyPayment,
 } from "@/store/order-slice/AdminOrderSlice";
 import { Link } from "react-router-dom";
 import MetaData from "../extras/MetaData";
@@ -36,6 +37,11 @@ const AdminOrdersPage = () => {
   const [notes, setNotes] = useState("");
   const [updatedDeliveryDate, setUpdatedDeliveryDate] = useState("");
   const [deleteOrderId, setDeleteOrderId] = useState(null);
+
+  // Payment verification dialog state
+  const [openVerifyDialog, setOpenVerifyDialog] = useState(false);
+  const [verifyOrder, setVerifyOrder] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -110,6 +116,30 @@ const AdminOrdersPage = () => {
     dispatch(deleteAllOrders()).then(() => {
       setOpenDeleteAllDialog(false);
       dispatch(getAllOrders());
+    });
+  };
+
+  const handleVerifyClick = (order) => {
+    setVerifyOrder(order);
+    setRejectionReason("");
+    setOpenVerifyDialog(true);
+  };
+
+  const handleVerifyAction = (action) => {
+    if (!verifyOrder) return;
+    if (action === "reject" && !rejectionReason.trim()) return;
+    dispatch(
+      verifyPayment({
+        orderId: verifyOrder._id,
+        action,
+        rejectionReason: action === "reject" ? rejectionReason.trim() : "",
+      })
+    ).then((result) => {
+      if (result.meta.requestStatus === "fulfilled") {
+        setOpenVerifyDialog(false);
+        setVerifyOrder(null);
+        dispatch(getAllOrders());
+      }
     });
   };
 
@@ -423,7 +453,18 @@ const AdminOrdersPage = () => {
                           </span>
                         </td>
                         <td className="p-2 sm:p-3 lg:p-4 text-xs sm:text-sm text-gray-700 dark:text-gray-300 hidden sm:table-cell">
-                          {order.paymentMethod}
+                          <div>{order.paymentMethod}</div>
+                          <span
+                            className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              order.paymentStatus === "COMPLETED"
+                                ? "bg-green-100 text-green-700"
+                                : order.paymentStatus === "FAILED"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}
+                          >
+                            {order.paymentStatus}
+                          </span>
                         </td>
                         <td className="p-2 sm:p-3 lg:p-4 text-xs sm:text-sm text-gray-700 dark:text-gray-300 hidden md:table-cell">
                           {new Date(order.createdAt).toLocaleString("en-IN", {
@@ -471,6 +512,19 @@ const AdminOrdersPage = () => {
                                   className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-xs sm:text-sm"
                                 >
                                   Update
+                                </motion.button>
+                              </Tooltip>
+                            )}
+                          {order.paymentMethod === "ONLINE" &&
+                            order.paymentStatus === "PENDING" && (
+                              <Tooltip title="Verify Payment">
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => handleVerifyClick(order)}
+                                  className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-xs sm:text-sm"
+                                >
+                                  Verify
                                 </motion.button>
                               </Tooltip>
                             )}
@@ -630,6 +684,94 @@ const AdminOrdersPage = () => {
             className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 text-white text-sm sm:text-base"
           >
             Update
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Verify Payment Dialog */}
+      <Dialog
+        open={openVerifyDialog}
+        onClose={() => setOpenVerifyDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle className="bg-green-600 text-white p-3 sm:p-4 text-base sm:text-lg">
+          Verify Payment
+        </DialogTitle>
+        <DialogContent className="dark:bg-gray-800 dark:text-gray-200 p-3 sm:p-4">
+          {verifyOrder && (
+            <div className="space-y-4 mt-2">
+              <div className="text-sm space-y-1">
+                <p>
+                  <span className="font-semibold">Order:</span> {verifyOrder._id}
+                </p>
+                <p>
+                  <span className="font-semibold">Customer:</span>{" "}
+                  {verifyOrder.user?.name} ({verifyOrder.user?.email})
+                </p>
+                <p>
+                  <span className="font-semibold">Amount:</span> ₹
+                  {verifyOrder.totalAmount?.toFixed(2)}
+                </p>
+                <p>
+                  <span className="font-semibold">UPI Reference:</span>{" "}
+                  {verifyOrder.upiReference || "Not provided"}
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold text-sm mb-2">Payment Screenshot</p>
+                {verifyOrder.paymentScreenshot?.url ? (
+                  <a
+                    href={verifyOrder.paymentScreenshot.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={verifyOrder.paymentScreenshot.url}
+                      alt="Payment screenshot"
+                      className="max-h-64 rounded-lg border border-gray-200 dark:border-gray-600 object-contain"
+                    />
+                  </a>
+                ) : (
+                  <p className="text-sm text-gray-500">No screenshot uploaded.</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Rejection reason (required to reject)
+                </label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  rows="2"
+                  placeholder="e.g. Screenshot does not match the order amount"
+                  className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500 text-sm"
+                />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+        <DialogActions className="dark:bg-gray-800 p-3 sm:p-4">
+          <Button
+            onClick={() => setOpenVerifyDialog(false)}
+            className="hover:bg-gray-200 dark:hover:bg-gray-700 text-sm sm:text-base"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => handleVerifyAction("reject")}
+            disabled={!rejectionReason.trim()}
+            className="bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base disabled:opacity-50"
+          >
+            Reject
+          </Button>
+          <Button
+            onClick={() => handleVerifyAction("approve")}
+            className="bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base"
+          >
+            Approve
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,7 +1,8 @@
 import { getCartItems, deleteCartItem } from "@/store/add-to-cart/addToCart";
 import { userAddress } from "@/store/address-slice/addressSlice";
 import { getSingleDetail } from "@/store/auth-slice/user";
-import { createOrder } from "@/store/order-slice/order";
+import { createOrder, uploadPaymentScreenshot } from "@/store/order-slice/order";
+import { getPaymentSettings } from "@/store/extra-slice/paymentSettingsSlice";
 import { getProducts } from "@/store/product-slice/productSlice";
 import {
   applyDiscount,
@@ -33,6 +34,14 @@ const CreateOrder = () => {
     finalTotal,
   } = useSelector((state) => state.cart);
   const { loading: orderLoading, error } = useSelector((state) => state.order);
+  const { settings: paymentSettings } = useSelector(
+    (state) => state.paymentSettings
+  );
+
+  const [upiReference, setUpiReference] = useState("");
+  const [screenshotFile, setScreenshotFile] = useState(null);
+  const [screenshotPreview, setScreenshotPreview] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   const [orderData, setOrderData] = useState({
     userId: "",
@@ -47,6 +56,7 @@ const CreateOrder = () => {
     dispatch(getProducts());
     dispatch(getSingleDetail());
     dispatch(getCartItems());
+    dispatch(getPaymentSettings());
     // Start checkout with a clean discount state.
     dispatch(clearAppliedDiscount());
     return () => {
@@ -112,6 +122,17 @@ const CreateOrder = () => {
     setOrderData({ ...orderData, [e.target.name]: e.target.value });
   };
 
+  const handleScreenshotChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file for the screenshot.");
+      return;
+    }
+    setScreenshotFile(file);
+    setScreenshotPreview(URL.createObjectURL(file));
+  };
+
   const handleApplyCoupon = async () => {
     const code = couponCode.trim();
     if (!code) {
@@ -152,11 +173,36 @@ const CreateOrder = () => {
       toast.error("Please select an address!");
       return;
     }
+
+    const method = orderData.paymentMethod || "COD";
+
     try {
-      // paymentMethod is fixed to COD in state initialization
-      const result = await dispatch(createOrder(orderData)).unwrap();
+      let payload = { ...orderData, paymentMethod: method };
+
+      if (method === "ONLINE") {
+        if (!screenshotFile) {
+          toast.error("Please upload your payment screenshot.");
+          return;
+        }
+        setUploading(true);
+        const screenshot = await dispatch(
+          uploadPaymentScreenshot(screenshotFile)
+        ).unwrap();
+        setUploading(false);
+        payload = {
+          ...payload,
+          upiReference: upiReference.trim(),
+          paymentScreenshot: screenshot,
+        };
+      }
+
+      const result = await dispatch(createOrder(payload)).unwrap();
       if (result) {
-        toast.success("Order placed successfully (Cash on Delivery)!");
+        toast.success(
+          method === "ONLINE"
+            ? "Order placed! Your payment is pending verification."
+            : "Order placed successfully (Cash on Delivery)!"
+        );
         cartItems.forEach((item) => {
           dispatch(deleteCartItem(item._id));
         });
@@ -164,8 +210,10 @@ const CreateOrder = () => {
         navigate("/order-success");
       }
     } catch (err) {
+      setUploading(false);
       toast.error(
-        "Failed to place order: " + (err.message || "Unknown error")
+        "Failed to place order: " +
+          ((typeof err === "object" ? err?.message : err) || "Unknown error")
       );
     }
   };
@@ -297,14 +345,113 @@ const CreateOrder = () => {
             <label className="block text-lg font-semibold text-gray-800 dark:text-gray-200">
               Payment Method
             </label>
-            <motion.div
-              variants={itemVariants}
-              className="relative bg-gray-50 dark:bg-gray-700 p-4 rounded-xl shadow-md"
-            >
-              <div className="w-full p-3 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200">
-                Cash on Delivery (COD)
-              </div>
-            </motion.div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() =>
+                  setOrderData((prev) => ({ ...prev, paymentMethod: "COD" }))
+                }
+                className={`text-left p-4 rounded-xl border-2 transition-all duration-200 ${
+                  orderData.paymentMethod === "COD"
+                    ? "border-yellow-500 dark:border-red-500 bg-yellow-50 dark:bg-gray-700"
+                    : "border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700"
+                }`}
+              >
+                <p className="font-semibold text-gray-800 dark:text-gray-100">
+                  Cash on Delivery
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Pay when your order arrives
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setOrderData((prev) => ({ ...prev, paymentMethod: "ONLINE" }))
+                }
+                className={`text-left p-4 rounded-xl border-2 transition-all duration-200 ${
+                  orderData.paymentMethod === "ONLINE"
+                    ? "border-yellow-500 dark:border-red-500 bg-yellow-50 dark:bg-gray-700"
+                    : "border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700"
+                }`}
+              >
+                <p className="font-semibold text-gray-800 dark:text-gray-100">
+                  Online Payment (UPI)
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Pay via UPI and upload screenshot
+                </p>
+              </button>
+            </div>
+
+            {orderData.paymentMethod === "ONLINE" && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl shadow-md space-y-4"
+              >
+                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                  {paymentSettings?.qrCode?.url ? (
+                    <img
+                      src={paymentSettings.qrCode.url}
+                      alt="UPI QR code"
+                      className="w-36 h-36 object-contain border border-gray-200 dark:border-gray-600 rounded-lg bg-white"
+                    />
+                  ) : (
+                    <div className="w-36 h-36 flex items-center justify-center border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-400 text-center px-2">
+                      QR code not configured
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Pay to UPI ID
+                    </p>
+                    <p className="text-lg font-bold text-gray-800 dark:text-gray-100 break-all">
+                      {paymentSettings?.upiId || "Not configured"}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                      Scan the QR or pay to the UPI ID above, then upload a
+                      screenshot of the successful payment below.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    UPI Reference / Transaction ID (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={upiReference}
+                    onChange={(e) => setUpiReference(e.target.value)}
+                    placeholder="e.g. 4012XXXXXX"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Payment Screenshot{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleScreenshotChange}
+                    className="block w-full text-sm text-gray-600 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-500 file:text-white hover:file:bg-yellow-600"
+                  />
+                  {screenshotPreview && (
+                    <img
+                      src={screenshotPreview}
+                      alt="Payment screenshot preview"
+                      className="mt-3 w-32 h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                    />
+                  )}
+                </div>
+              </motion.div>
+            )}
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-4">
@@ -484,10 +631,15 @@ const CreateOrder = () => {
             variants={buttonVariants}
             whileHover="hover"
             whileTap="tap"
-            className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 dark:from-red-600 dark:to-red-700 text-white py-3 rounded-full font-semibold shadow-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 flex items-center justify-center gap-2"
+            disabled={uploading || orderLoading}
+            className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 dark:from-red-600 dark:to-red-700 text-white py-3 rounded-full font-semibold shadow-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60"
             aria-label="Place Order"
           >
-            Place Order
+            {uploading
+              ? "Uploading screenshot..."
+              : orderLoading
+              ? "Placing order..."
+              : "Place Order"}
           </motion.button>
         </form>
       </motion.div>

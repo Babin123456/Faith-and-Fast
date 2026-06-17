@@ -69,8 +69,23 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["COD"],
+      enum: ["COD", "ONLINE"],
       default: "COD",
+    },
+    upiReference: {
+      type: String,
+      default: "",
+    },
+    paymentScreenshot: {
+      public_id: { type: String, default: "" },
+      url: { type: String, default: "" },
+    },
+    paymentVerifiedAt: {
+      type: Date,
+    },
+    paymentRejectionReason: {
+      type: String,
+      default: "",
     },
     orderStatus: {
       type: String,

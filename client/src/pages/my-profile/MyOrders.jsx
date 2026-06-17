@@ -14,10 +14,12 @@ import {
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { myOrders } from "@/store/order-slice/order";
+import { jsPDF } from "jspdf";
 
 const MyOrders = () => {
   const dispatch = useDispatch();
   const { orders, loading, error } = useSelector((state) => state.order);
+  const { user } = useSelector((state) => state.auth);
 
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [timeFilter, setTimeFilter] = useState("ALL");
@@ -142,6 +144,8 @@ const MyOrders = () => {
         createdAt: order.createdAt,
         deliveryDate: order.deliveryDate,
         totalAmount: order.totalAmount,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
       }))
     );
 
@@ -158,6 +162,67 @@ const MyOrders = () => {
   const totalPages = Math.ceil(filteredProducts.length / ordersPerPage);
 
   const handlePageChange = (page) => setCurrentPage(page);
+
+  const handleDownloadReceipt = (orderId) => {
+    const order = (Array.isArray(orders) ? orders : []).find(
+      (o) => o._id === orderId
+    );
+    if (!order) return;
+
+    const doc = new jsPDF();
+    let y = 20;
+
+    doc.setFontSize(18);
+    doc.text("Faith AND Fast", 14, y);
+    y += 8;
+    doc.setFontSize(12);
+    doc.text("Order Receipt", 14, y);
+    y += 10;
+
+    doc.setFontSize(10);
+    doc.text(`Order ID: ${order._id}`, 14, y);
+    y += 6;
+    doc.text(`Customer: ${user?.name || "Customer"}`, 14, y);
+    y += 6;
+    doc.text(
+      `Order Date: ${new Date(order.createdAt).toLocaleString("en-IN")}`,
+      14,
+      y
+    );
+    y += 6;
+    doc.text(`Payment Method: ${order.paymentMethod}`, 14, y);
+    y += 6;
+    doc.text(`Payment Status: ${order.paymentStatus}`, 14, y);
+    y += 6;
+    if (order.upiReference) {
+      doc.text(`UPI Reference: ${order.upiReference}`, 14, y);
+      y += 6;
+    }
+    y += 4;
+
+    doc.setFontSize(12);
+    doc.text("Items", 14, y);
+    y += 6;
+    doc.setFontSize(10);
+    order.products.forEach((item) => {
+      const name = item.product?.name || "Product";
+      const line = `${name}  x${item.quantity}   Rs. ${Number(
+        item.totalPrice || 0
+      ).toFixed(2)}`;
+      doc.text(line, 14, y);
+      y += 6;
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+    });
+
+    y += 4;
+    doc.setFontSize(12);
+    doc.text(`Total: Rs. ${Number(order.totalAmount).toFixed(2)}`, 14, y);
+
+    doc.save(`receipt-${order._id}.pdf`);
+  };
 
   const uniqueYears = [
     ...new Set(
@@ -334,13 +399,24 @@ const MyOrders = () => {
                           ₹{product.totalAmount.toFixed(2)}
                         </p>
                        
-                        <div className="mt-1">
+                        <div className="mt-1 flex flex-wrap gap-1">
                           <span
                             className={`inline-block ${handleStatus(
                               product.orderStatus
                             )}`}
                           >
                             {product.orderStatus}
+                          </span>
+                          <span
+                            className={`inline-block px-2 py-1 rounded-md font-semibold text-xs sm:text-sm ${
+                              product.paymentStatus === "COMPLETED"
+                                ? "bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100"
+                                : product.paymentStatus === "FAILED"
+                                ? "bg-red-200 dark:bg-red-800 text-red-900 dark:text-red-100"
+                                : "bg-yellow-200 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100"
+                            }`}
+                          >
+                            {product.paymentMethod} · {product.paymentStatus}
                           </span>
                         </div>
                         <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -371,6 +447,22 @@ const MyOrders = () => {
                               </Link>
                             </motion.div>
                           </Tooltip>
+                          {(product.paymentMethod === "COD" ||
+                            product.paymentStatus === "COMPLETED") &&
+                            product.orderStatus !== "CANCELLED" && (
+                              <Tooltip title="Download Receipt">
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() =>
+                                    handleDownloadReceipt(product.orderId)
+                                  }
+                                  className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-xs sm:text-sm"
+                                >
+                                  Download Receipt
+                                </motion.button>
+                              </Tooltip>
+                            )}
                           {product.orderStatus === "DELIVERED" && (
                             <Tooltip title="Rate & Review Product">
                               <motion.div

@@ -4,6 +4,7 @@ import ProductModel from "../models/productModel.js";
 import UserModel from "../models/userModel.js";
 import sendEmail from "../config/sendEmail.js";
 import generateReceiptHTML from "../utils/generateReceipt.js";
+import { uploadImage } from "../utils/cloudinary.js";
 
 export const createOrder = catchAsyncErrors(async (req, res) => {
   try {
@@ -15,6 +16,8 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
       totalAmount,
       couponCode,
       discountAmount,
+      upiReference,
+      paymentScreenshot,
     } = req.body;
 
     let { deliveryDate } = req.body;
@@ -22,6 +25,20 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
     const createdAt = new Date();
     deliveryDate = new Date(createdAt);
     deliveryDate.setDate(createdAt.getDate() + 5);
+
+    const method = paymentMethod || "COD";
+    if (!["COD", "ONLINE"].includes(method)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid payment method" });
+    }
+    if (method === "ONLINE" && (!paymentScreenshot || !paymentScreenshot.url)) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment screenshot is required for online payments",
+      });
+    }
+
     const newOrder = new OrderModel({
       user: userId,
       address: addressId,
@@ -29,7 +46,15 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
       totalAmount,
       couponCode: couponCode || "",
       discountAmount: discountAmount || 0,
-      paymentMethod,
+      paymentMethod: method,
+      upiReference: method === "ONLINE" ? upiReference || "" : "",
+      paymentScreenshot:
+        method === "ONLINE" && paymentScreenshot
+          ? {
+              public_id: paymentScreenshot.public_id || "",
+              url: paymentScreenshot.url || "",
+            }
+          : { public_id: "", url: "" },
       orderStatus: "PENDING",
       paymentStatus: "PENDING",
       deliveryDate,
@@ -41,18 +66,136 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
       .populate("user", "name email")
       .populate("products.product", "name price images");
 
-    const receiptHTML = generateReceiptHTML(populatedOrder);
-    const user = await UserModel.findById(userId);
+    // COD orders get their confirmation/receipt immediately.
+    // ONLINE orders are "Pending Verification" — their receipt email is sent
+    // only after an admin verifies the payment (see verifyPayment below).
+    if (method === "COD") {
+      const receiptHTML = generateReceiptHTML(populatedOrder);
+      const user = await UserModel.findById(userId);
 
-    sendEmail({
-      sendTo: user.email,
-      subject: "Order Confirmation",
-      html: receiptHTML,
-    });
+      sendEmail({
+        sendTo: user.email,
+        subject: "Order Confirmation",
+        html: receiptHTML,
+      });
+    }
 
     res.status(201).json({ success: true, order: populatedOrder });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Customer — upload the UPI payment screenshot to Cloudinary before placing an
+// online order. Returns { public_id, url } which the client sends with createOrder.
+export const uploadPaymentScreenshot = catchAsyncErrors(async (req, res) => {
+  try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No screenshot uploaded" });
+    }
+
+    const result = await uploadImage(req.file);
+
+    return res.status(200).json({
+      success: true,
+      screenshot: { public_id: result.public_id, url: result.secure_url },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Admin — approve or reject a pending online payment.
+export const verifyPayment = catchAsyncErrors(async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { action, rejectionReason } = req.body;
+
+    if (!["approve", "reject"].includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid action. Use 'approve' or 'reject'.",
+      });
+    }
+
+    const order = await OrderModel.findById(orderId)
+      .populate("user", "name email")
+      .populate("products.product", "name price images");
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    if (order.paymentMethod !== "ONLINE") {
+      return res.status(400).json({
+        success: false,
+        message: "Only online payments require verification",
+      });
+    }
+
+    if (order.paymentStatus !== "PENDING") {
+      return res.status(400).json({
+        success: false,
+        message: `Payment already ${order.paymentStatus.toLowerCase()}`,
+      });
+    }
+
+    if (action === "approve") {
+      order.paymentStatus = "COMPLETED";
+      order.paymentVerifiedAt = new Date();
+      order.paymentRejectionReason = "";
+      await order.save();
+
+      const receiptHTML = generateReceiptHTML(order);
+      sendEmail({
+        sendTo: order.user.email,
+        subject: "Payment Verified — Your Receipt - Faith AND Fast",
+        html: receiptHTML,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Payment approved successfully",
+        order,
+      });
+    }
+
+    // reject
+    order.paymentStatus = "FAILED";
+    order.paymentRejectionReason =
+      rejectionReason || "Payment could not be verified";
+    await order.save();
+
+    sendEmail({
+      sendTo: order.user.email,
+      subject: "Payment Verification Failed - Faith AND Fast",
+      html: `
+        <html>
+          <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333;">
+            <div style="background-color: #fff; padding: 20px; max-width: 600px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+              <h2 style="color: #e91e63; text-align: center;">Payment Verification Failed</h2>
+              <p style="font-size: 16px;">Dear ${order.user.name},</p>
+              <p style="font-size: 16px;">We were unable to verify the payment for your order <strong>#${order._id}</strong>.</p>
+              <p style="font-size: 16px;"><strong>Reason:</strong> ${order.paymentRejectionReason}</p>
+              <p style="font-size: 16px;">Please contact us at <strong>support@faithandfast.com</strong> or place the order again.</p>
+              <p style="font-size: 16px; text-align: center;">Best regards,<br>Faith AND Fast Team</p>
+            </div>
+          </body>
+        </html>
+      `,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment rejected",
+      order,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 

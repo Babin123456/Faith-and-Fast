@@ -22,6 +22,29 @@ export const createOrder = createAsyncThunk(
   }
 );
 
+export const uploadPaymentScreenshot = createAsyncThunk(
+  "order/uploadPaymentScreenshot",
+  async (file, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("screenshot", file);
+      const response = await axiosInstance.post(
+        "/api/order/upload-payment-screenshot",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data.screenshot;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Screenshot upload failed");
+    }
+  }
+);
+
 export const getSingleOrder = createAsyncThunk(
   "order/getSingleOrder",
   async (orderId, { rejectWithValue }) => {

@@ -9,13 +9,30 @@ import {
   getSingleOrder,
   myOrders,
   updateOrderStatus,
+  uploadPaymentScreenshot,
+  verifyPayment,
 } from "../controllers/orderController.js";
 import admin from "../middleware/Admin.js";
+import upload from "../middleware/multer.js";
 import { getOrderAnalytics } from "../controllers/analyticsController.js";
 
 const orderRouter = express.Router();
 
 orderRouter.post("/create", auth, createOrder);
+
+orderRouter.post(
+  "/upload-payment-screenshot",
+  auth,
+  upload.single("screenshot"),
+  uploadPaymentScreenshot
+);
+
+orderRouter.put(
+  "/admin/verify-payment/:orderId",
+  auth,
+  admin,
+  verifyPayment
+);
 
 orderRouter.get("/myorder", auth, myOrders);
 
