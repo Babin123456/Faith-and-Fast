@@ -226,11 +226,16 @@ const ProductDetails = ({ products }) => {
         productId,
         reviewData: { rating, comment: reviewText, name: user.name },
       })
-    );
-    toast.success("Review posted successfully");
-    window.location.reload();
-    setReviewText("");
-    setRating(0);
+    )
+      .unwrap()
+      .then(() => {
+        toast.success("Review posted successfully");
+        // Re-fetch reviews so the new one appears without a page reload.
+        dispatch(getProductReviews(productId));
+        setReviewText("");
+        setRating(0);
+      })
+      .catch((err) => toast.error(err?.message || "Failed to post review"));
   };
 
   const handleAddCart = (item) => {
