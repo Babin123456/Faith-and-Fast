@@ -11,7 +11,6 @@ import {
 import Typewriter from "typewriter-effect";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { getProducts } from "@/store/product-slice/productSlice";
 import { toast } from "react-toastify";
 import { addToWishList } from "@/store/add-to-wishList/addToWishList";
 
@@ -21,10 +20,6 @@ const ProductCategory = ({ title, items }) => {
   const [shuffledItems, setShuffledItems] = useState([]);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(getProducts());
-  }, [dispatch]);
 
   useEffect(() => {
     const shuffleArray = (array) => {
