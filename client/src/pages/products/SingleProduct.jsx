@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -23,6 +23,7 @@ import { addToWishList } from "@/store/add-to-wishList/addToWishList";
 const ProductDetails = ({ products }) => {
   const { productId } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const {
     product,
     reviews = [],
@@ -247,6 +248,24 @@ const ProductDetails = ({ products }) => {
     toast.success(`"${item.name}" added to cart!`);
   };
 
+  // Buy Now — add the item to the cart, then take the user straight to
+  // checkout, bypassing the cart page. We await the thunk so checkout only
+  // opens once the item is actually in the cart.
+  const handleBuyNow = async (item) => {
+    if (!item) {
+      toast.error("Error: Item not found!");
+      return;
+    }
+    try {
+      await dispatch(
+        addToCart({ productId: item._id, selectedColor, selectedSize })
+      ).unwrap();
+      navigate("/checkout");
+    } catch (err) {
+      toast.error(err || "Could not proceed to checkout. Please try again.");
+    }
+  };
+
   const handleAddWishList = (item) => {
       dispatch(addToWishList(item._id));
       toast.success(`Successfully added to WishList!`);
@@ -318,6 +337,22 @@ const ProductDetails = ({ products }) => {
                       </span>
                     )}
                   </div>
+                  {/* Stock availability indicator */}
+                  <motion.div variants={itemVariants}>
+                    {product?.stock === 0 ? (
+                      <span className="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">
+                        Out of Stock
+                      </span>
+                    ) : product?.stock <= 5 ? (
+                      <span className="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400">
+                        Only {product?.stock} left in stock — order soon
+                      </span>
+                    ) : (
+                      <span className="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400">
+                        In Stock
+                      </span>
+                    )}
+                  </motion.div>
                   {product?.reviews?.length > 0 && (
                     <motion.div
                       variants={itemVariants}
@@ -382,7 +417,7 @@ const ProductDetails = ({ products }) => {
                     <Button
                       fullWidth
                       onClick={() => handleAddCart(product)}
-                      disabled={loading}
+                      disabled={loading || product?.stock === 0}
                       sx={{
                         background:
                           "linear-gradient(to right, #f59e0b, #f97316)",
@@ -399,7 +434,31 @@ const ProductDetails = ({ products }) => {
                       }}
                       startIcon={<ShoppingCartIcon />}
                     >
-                      Add to Cart
+                      {product?.stock === 0 ? "Out of Stock" : "Add to Cart"}
+                    </Button>
+                  </motion.div>
+                  <motion.div variants={itemVariants}>
+                    <Button
+                      fullWidth
+                      onClick={() => handleBuyNow(product)}
+                      disabled={loading || product?.stock === 0}
+                      sx={{
+                        background:
+                          "linear-gradient(to right, #16a34a, #15803d)",
+                        color: "white",
+                        padding: "12px 24px",
+                        borderRadius: "9999px",
+                        fontSize: "16px",
+                        fontWeight: "bold",
+                        "&:hover": {
+                          background:
+                            "linear-gradient(to right, #15803d, #166534)",
+                        },
+                        "&:disabled": { opacity: 0.5 },
+                      }}
+                      startIcon={<ShoppingCartIcon />}
+                    >
+                      {product?.stock === 0 ? "Unavailable" : "Buy Now"}
                     </Button>
                   </motion.div>
                   <motion.div variants={itemVariants}>
