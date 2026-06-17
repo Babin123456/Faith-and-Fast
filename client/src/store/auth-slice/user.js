@@ -1,5 +1,6 @@
 import axiosInstance from "@/api";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { isTokenValid } from "@/utils/tokenUtils";
 
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
@@ -259,12 +260,21 @@ export const deleteUser = createAsyncThunk(
   }
 );
 
-const storedUser = localStorage.getItem("user");
-const storedToken = localStorage.getItem("token") || null;
+const rawToken = localStorage.getItem("token") || null;
+// Only trust a stored token if it is a valid, unexpired JWT. An expired or
+// malformed token is purged here so the app never boots into a stale
+// "authenticated" state after a refresh.
+const tokenIsValid = isTokenValid(rawToken);
+if (rawToken && !tokenIsValid) {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+}
+const storedToken = tokenIsValid ? rawToken : null;
+const storedUserRaw = tokenIsValid ? localStorage.getItem("user") : null;
 
 const initialState = {
-  user: storedUser ? JSON.parse(storedUser) : null,
-  isAuthenticated: !!storedToken,
+  user: storedUserRaw ? JSON.parse(storedUserRaw) : null,
+  isAuthenticated: tokenIsValid,
   token: storedToken,
   loading: false,
   error: null,
