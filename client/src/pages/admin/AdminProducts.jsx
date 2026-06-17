@@ -51,7 +51,9 @@ const AdminProducts = () => {
       .unwrap()
       .then(() => {
         setOpenDeleteDialog(false);
-        window.location.reload();
+        // Re-fetch the current page reactively instead of a full reload,
+        // preserving scroll position and the active search/page state.
+        dispatch(getProductByFilter({ page, limit: 10, searchQuery }));
       })
       .catch((err) => {
         console.log("Error deleting product:", err);

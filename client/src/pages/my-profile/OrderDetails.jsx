@@ -104,7 +104,8 @@ const OrderDetails = () => {
     try {
       await dispatch(cancelOrder(order._id)).unwrap();
       toast.success("Order canceled successfully!");
-      window.location.reload();
+      // Re-fetch this order so the status updates in place, no full reload.
+      dispatch(getSingleOrder(Id));
     } catch (error) {
       toast.error(error || "Failed to cancel order.");
     } finally {

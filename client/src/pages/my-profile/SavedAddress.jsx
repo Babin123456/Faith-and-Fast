@@ -125,9 +125,12 @@ const SavedAddress = () => {
 
     dispatch(deleteUserAddress(id))
       .unwrap()
-      .then(() => toast.success("Address deleted successfully!"))
+      .then(() => {
+        toast.success("Address deleted successfully!");
+        // Refresh the address list from state instead of reloading the page.
+        dispatch(userAddress());
+      })
       .catch((err) => toast.error(err.message || "Failed to delete address"));
-    window.location.reload();
   };
 
   const handleAddAddress = (e) => {
