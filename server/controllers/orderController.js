@@ -327,8 +327,40 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res) => {
     });
 
     if (orderStatus === "SHIPPED") {
+      // Two-phase inventory update to guarantee stock integrity.
+      //
+      // PHASE 1 — validate every line item BEFORE touching any stock. Load each
+      // product, confirm it exists and has enough quantity. If any single item
+      // fails, we abort here having written nothing — inventory is left exactly
+      // as it was. (The previous single-loop approach deducted item-by-item, so
+      // a failure on item 3 left items 1 and 2 permanently deducted with no
+      // rollback.)
+      const stockUpdates = [];
       for (const item of order.products) {
-        await updateStock(item.product, item.quantity);
+        const product = await ProductModel.findById(item.product);
+
+        if (!product) {
+          return res.status(404).json({
+            success: false,
+            message: `Product with ID ${item.product} not found. No stock was changed.`,
+          });
+        }
+
+        if (product.stock < item.quantity) {
+          return res.status(400).json({
+            success: false,
+            message: `Insufficient stock for "${product.name}" (available: ${product.stock}, required: ${item.quantity}). No stock was changed.`,
+          });
+        }
+
+        stockUpdates.push({ product, quantity: item.quantity });
+      }
+
+      // PHASE 2 — all items validated; apply every deduction. Each product has
+      // already been confirmed to have sufficient stock above.
+      for (const { product, quantity } of stockUpdates) {
+        product.stock -= quantity;
+        await product.save({ validateBeforeSave: false });
       }
     }
 
@@ -348,22 +380,6 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res) => {
     });
   }
 });
-
-async function updateStock(productId, quantity) {
-  const product = await ProductModel.findById(productId);
-
-  if (!product) {
-    throw new Error(`Product with ID ${productId} not found`);
-  }
-
-  if (product.stock < quantity) {
-    throw new Error(`Insufficient stock for product ${productId}`);
-  }
-
-  product.stock -= quantity;
-
-  await product.save({ validateBeforeSave: false });
-}
 
 export const cancelOrder = catchAsyncErrors(async (req, res) => {
   try {
