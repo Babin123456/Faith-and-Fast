@@ -48,6 +48,6 @@ orderRouter.put("/cancel/:orderId", auth, cancelOrder);
 
 orderRouter.delete("/admin/delete/:orderId", auth, admin, deleteOrder);
 
-orderRouter.delete("/admin/delete-all", deleteAllOrders);
+orderRouter.delete("/admin/delete-all", auth, admin, deleteAllOrders);
 
 export default orderRouter;
