@@ -75,6 +75,7 @@ const discountSlice = createSlice({
   name: "discount",
   initialState: {
     discounts: [],
+    appliedDiscount: null,
     loading: false,
     error: null,
     successMessage: null,
@@ -83,6 +84,9 @@ const discountSlice = createSlice({
     clearMessages: (state) => {
       state.successMessage = null;
       state.error = null;
+    },
+    clearAppliedDiscount: (state) => {
+      state.appliedDiscount = null;
     },
   },
   extraReducers: (builder) => {
@@ -103,8 +107,22 @@ const discountSlice = createSlice({
         state.discounts.push(action.payload.discount);
         state.successMessage = action.payload.message;
       })
+      .addCase(applyDiscount.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(applyDiscount.fulfilled, (state, action) => {
+        state.loading = false;
         state.successMessage = action.payload.message;
+        // Persist the applied discount so Checkout can show savings, compute
+        // the final payable amount, and attach coupon info to the order.
+        state.appliedDiscount = {
+          name: action.payload.discount?.name,
+          type: action.payload.discount?.type,
+          value: action.payload.discount?.value,
+          discountAmount: action.payload.discountAmount,
+          newPrice: action.payload.newPrice,
+        };
       })
       .addCase(deleteDiscount.fulfilled, (state, action) => {
         state.discounts = state.discounts.filter(
@@ -122,5 +140,5 @@ const discountSlice = createSlice({
   },
 });
 
-export const { clearMessages } = discountSlice.actions;
+export const { clearMessages, clearAppliedDiscount } = discountSlice.actions;
 export default discountSlice.reducer;

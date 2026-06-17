@@ -3,6 +3,10 @@ import { userAddress } from "@/store/address-slice/addressSlice";
 import { getSingleDetail } from "@/store/auth-slice/user";
 import { createOrder } from "@/store/order-slice/order";
 import { getProducts } from "@/store/product-slice/productSlice";
+import {
+  applyDiscount,
+  clearAppliedDiscount,
+} from "@/store/extra-slice/discount";
 import { Button, CircularProgress } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -14,7 +18,10 @@ const CreateOrder = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { discountValue } = useSelector((state) => state.discount);
+  const { appliedDiscount, loading: discountLoading } = useSelector(
+    (state) => state.discount
+  );
+  const [couponCode, setCouponCode] = useState("");
   const { user, loading: authLoading } = useSelector((state) => state.auth);
   const { address } = useSelector((state) => state.address);
   const { product: products = [], loading: productLoading } = useSelector(
@@ -40,6 +47,11 @@ const CreateOrder = () => {
     dispatch(getProducts());
     dispatch(getSingleDetail());
     dispatch(getCartItems());
+    // Start checkout with a clean discount state.
+    dispatch(clearAppliedDiscount());
+    return () => {
+      dispatch(clearAppliedDiscount());
+    };
   }, [dispatch]);
 
   useEffect(() => {
@@ -79,16 +91,59 @@ const CreateOrder = () => {
         })
         .filter(Boolean);
 
+      // If a coupon is applied, the payable amount is the discounted newPrice
+      // returned by the backend; otherwise it is the normal cart total.
+      const payable =
+        appliedDiscount?.newPrice != null
+          ? appliedDiscount.newPrice
+          : finalTotal;
+
       setOrderData((prev) => ({
         ...prev,
         products: formattedProducts,
-        totalAmount: finalTotal.toFixed(2),
+        totalAmount: Number(payable).toFixed(2),
+        couponCode: appliedDiscount?.name || "",
+        discountAmount: appliedDiscount?.discountAmount || 0,
       }));
     }
-  }, [cartItems, products, discountValue, finalTotal]);
+  }, [cartItems, products, appliedDiscount, finalTotal]);
 
   const handleChange = (e) => {
     setOrderData({ ...orderData, [e.target.name]: e.target.value });
+  };
+
+  const handleApplyCoupon = async () => {
+    const code = couponCode.trim();
+    if (!code) {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+    if (!user?._id) {
+      toast.error("Please login to apply a coupon");
+      return;
+    }
+    try {
+      await dispatch(
+        applyDiscount({
+          userId: user._id,
+          couponCode: code,
+          // originalPrice is the post-product-discount cart total.
+          originalPrice: Number(finalTotal),
+        })
+      ).unwrap();
+      toast.success("Coupon applied successfully!");
+    } catch (err) {
+      toast.error(
+        (typeof err === "object" ? err?.message : err) ||
+          "Failed to apply coupon"
+      );
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    dispatch(clearAppliedDiscount());
+    setCouponCode("");
+    toast.info("Coupon removed");
   };
 
   const handleSubmit = async (e) => {
@@ -327,23 +382,99 @@ const CreateOrder = () => {
 
           <motion.div variants={itemVariants} className="space-y-4">
             <label className="block text-lg font-semibold text-gray-800 dark:text-gray-200">
+              Coupon Code
+            </label>
+            <motion.div
+              variants={itemVariants}
+              className="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl shadow-md"
+            >
+              {appliedDiscount?.name ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-600 dark:text-green-400 font-semibold">
+                      Coupon &quot;{appliedDiscount.name}&quot; applied
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      You saved ₹
+                      {Number(appliedDiscount.discountAmount || 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="text-red-500 hover:text-red-700 font-medium text-sm"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="Enter coupon code"
+                    className="flex-1 p-3 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 uppercase"
+                    aria-label="Coupon code"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={discountLoading}
+                    sx={{
+                      background: "linear-gradient(to right, #f59e0b, #f97316)",
+                      color: "white",
+                      padding: "8px 24px",
+                      borderRadius: "9999px",
+                      fontWeight: "bold",
+                      "&:hover": {
+                        background: "linear-gradient(to right, #d97706, #ea580c)",
+                      },
+                    }}
+                  >
+                    {discountLoading ? "Applying..." : "Apply"}
+                  </Button>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+
+          <motion.div variants={itemVariants} className="space-y-4">
+            <label className="block text-lg font-semibold text-gray-800 dark:text-gray-200">
               Total Amount
             </label>
             <motion.div
               variants={itemVariants}
-              className="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl shadow-md flex items-center justify-between"
+              className="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl shadow-md space-y-2"
             >
-              <span className="text-xl text-gray-800 dark:text-gray-200">
-                ₹
-              </span>
+              {appliedDiscount?.discountAmount > 0 && (
+                <>
+                  <div className="flex items-center justify-between text-gray-600 dark:text-gray-400">
+                    <span>Subtotal</span>
+                    <span>₹{Number(finalTotal).toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-green-600 dark:text-green-400">
+                    <span>Coupon Discount</span>
+                    <span>
+                      -₹
+                      {Number(appliedDiscount.discountAmount || 0).toFixed(2)}
+                    </span>
+                  </div>
+                </>
+              )}
+              <div className="flex items-center justify-between border-t border-gray-300 dark:border-gray-600 pt-2">
+                <span className="text-xl font-bold text-gray-800 dark:text-gray-200">
+                  Payable
+                </span>
+                <span className="text-xl font-bold text-gray-800 dark:text-gray-200">
+                  ₹{Number(orderData.totalAmount || 0).toFixed(2)}
+                </span>
+              </div>
               <input
-                id="totalAmount"
-                type="number"
+                type="hidden"
                 name="totalAmount"
                 value={orderData.totalAmount || 0}
-                className="w-full p-3 text-xl text-gray-800 dark:text-gray-200 bg-transparent focus:outline-none"
                 readOnly
-                aria-label="Total Amount"
               />
             </motion.div>
           </motion.div>

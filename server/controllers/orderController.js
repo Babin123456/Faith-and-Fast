@@ -7,8 +7,15 @@ import generateReceiptHTML from "../utils/generateReceipt.js";
 
 export const createOrder = catchAsyncErrors(async (req, res) => {
   try {
-    const { userId, addressId, products, paymentMethod, totalAmount } =
-      req.body;
+    const {
+      userId,
+      addressId,
+      products,
+      paymentMethod,
+      totalAmount,
+      couponCode,
+      discountAmount,
+    } = req.body;
 
     let { deliveryDate } = req.body;
 
@@ -20,6 +27,8 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
       address: addressId,
       products,
       totalAmount,
+      couponCode: couponCode || "",
+      discountAmount: discountAmount || 0,
       paymentMethod,
       orderStatus: "PENDING",
       paymentStatus: "PENDING",
