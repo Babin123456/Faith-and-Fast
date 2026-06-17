@@ -7,6 +7,7 @@ import {
   Menu,
   X,
   BarChart3,
+  Tag,
 } from "lucide-react";
 import AdminUsers from "./AdminUsers";
 import { useNavigate } from "react-router-dom";
@@ -78,6 +79,7 @@ const AdminDashboard = () => {
             { icon: ShoppingBag, text: "Products" },
             { icon: Package, text: "Orders" },
             { icon: BarChart3, text: "Analytics" },
+            { icon: Tag, text: "Discounts", path: "/admin/discounts" },
           ].map((item) => (
             <button
               key={item.text}

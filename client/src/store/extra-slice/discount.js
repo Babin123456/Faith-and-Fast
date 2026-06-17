@@ -36,6 +36,24 @@ export const createDiscount = createAsyncThunk(
   }
 );
 
+// Update an existing discount
+export const updateDiscount = createAsyncThunk(
+  "discount/update",
+  async ({ discountId, discountData }, thunkAPI) => {
+    try {
+      const response = await axiosInstance.put(
+        `${API_URL}/update/${discountId}`,
+        discountData
+      );
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data || "Error updating discount"
+      );
+    }
+  }
+);
+
 // Apply a discount
 export const applyDiscount = createAsyncThunk(
   "discount/apply",
@@ -105,6 +123,13 @@ const discountSlice = createSlice({
       })
       .addCase(createDiscount.fulfilled, (state, action) => {
         state.discounts.push(action.payload.discount);
+        state.successMessage = action.payload.message;
+      })
+      .addCase(updateDiscount.fulfilled, (state, action) => {
+        const updated = action.payload.discount;
+        state.discounts = state.discounts.map((d) =>
+          d._id === updated._id ? updated : d
+        );
         state.successMessage = action.payload.message;
       })
       .addCase(applyDiscount.pending, (state) => {

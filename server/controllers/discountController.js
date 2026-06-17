@@ -61,6 +61,91 @@ export const createDiscount = async (req, res) => {
   }
 };
 
+// Admin — update an existing discount in place. Mirrors createDiscount's
+// validation but only applies the fields that are provided, so a partial
+// edit (e.g. just extending endDate or toggling isActive) is supported.
+export const updateDiscount = async (req, res) => {
+  try {
+    const { discountId } = req.params;
+
+    const discount = await DiscountModel.findById(discountId);
+    if (!discount) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Discount not found" });
+    }
+
+    const {
+      name,
+      discountType,
+      discountValue,
+      applicableProducts,
+      totalUsersAllowed,
+      startDate,
+      endDate,
+      isActive,
+    } = req.body;
+
+    // Validate discountType only if it's being changed.
+    if (discountType !== undefined && !["FIXED", "PERCENTAGE"].includes(discountType)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid discount type" });
+    }
+
+    // Validate discountValue only if it's being changed.
+    if (discountValue !== undefined && Number(discountValue) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Discount value must be greater than 0",
+      });
+    }
+
+    // A percentage discount cannot exceed 100.
+    const effectiveType = discountType ?? discount.discountType;
+    const effectiveValue =
+      discountValue !== undefined ? Number(discountValue) : discount.discountValue;
+    if (effectiveType === "PERCENTAGE" && effectiveValue > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "A percentage discount cannot exceed 100",
+      });
+    }
+
+    // totalUsersAllowed cannot be set below the number who have already used it.
+    if (
+      totalUsersAllowed !== undefined &&
+      Number(totalUsersAllowed) < discount.usedBy.length
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `totalUsersAllowed cannot be less than the ${discount.usedBy.length} user(s) who already redeemed this discount`,
+      });
+    }
+
+    // Apply only the provided fields.
+    if (name !== undefined) discount.name = name;
+    if (discountType !== undefined) discount.discountType = discountType;
+    if (discountValue !== undefined) discount.discountValue = Number(discountValue);
+    if (applicableProducts !== undefined) discount.applicableProducts = applicableProducts;
+    if (totalUsersAllowed !== undefined) discount.totalUsersAllowed = Number(totalUsersAllowed);
+    if (startDate !== undefined) discount.startDate = startDate;
+    if (endDate !== undefined) discount.endDate = endDate;
+    if (isActive !== undefined) discount.isActive = Boolean(isActive);
+
+    await discount.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Discount Updated Successfully",
+      discount,
+    });
+  } catch (error) {
+    console.error("Error updating discount:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 export const applyDiscount = async (req, res) => {
   try {
     const { userId, couponCode, originalPrice } = req.body;

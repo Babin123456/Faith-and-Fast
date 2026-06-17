@@ -31,6 +31,7 @@ import MyOrders from "./pages/my-profile/MyOrders";
 import OrderDetails from "./pages/my-profile/OrderDetails";
 import CreateOrder from "./pages/orders/Checkout";
 import ProductUpdatePage from "./pages/admin/AdminUpdateProduct";
+import AdminDiscount from "./pages/admin/AdminDiscount";
 import { useEffect } from "react";
 import { getCartItems } from "./store/add-to-cart/addToCart";
 import { getWishListItems } from "./store/add-to-wishList/addToWishList";
@@ -171,6 +172,7 @@ const App = () => {
               path="/admin/product/update/:id"
               element={<ProductUpdatePage />}
             />
+            <Route path="/admin/discounts" element={<AdminDiscount />} />
           </>
         )}
 
