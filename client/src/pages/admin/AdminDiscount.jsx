@@ -18,6 +18,7 @@ import {
   fetchDiscounts,
   clearMessages,
 } from "@/store/extra-slice/discount";
+import { getAllUsers } from "@/store/auth-slice/user";
 
 const EMPTY_FORM = {
   name: "",
@@ -66,6 +67,7 @@ const AdminDiscount = () => {
   const { discounts, loading, error, successMessage } = useSelector(
     (state) => state.discount
   );
+  const { totalUsers } = useSelector((state) => state.auth);
 
   const [discountData, setDiscountData] = useState(EMPTY_FORM);
   const [openModal, setOpenModal] = useState(false);
@@ -98,6 +100,8 @@ const AdminDiscount = () => {
   const openCreateModal = () => {
     setEditingId(null);
     setDiscountData(EMPTY_FORM);
+    // Fetch the latest user count so the "All Users" button is accurate.
+    dispatch(getAllUsers({ page: 1, limit: 1 }));
     setOpenModal(true);
   };
 
@@ -317,16 +321,39 @@ const AdminDiscount = () => {
               type="number"
               className="dark:bg-gray-700"
             />
-            <TextField
-              label="Total Users Allowed"
-              variant="outlined"
-              fullWidth
-              name="totalUsersAllowed"
-              value={discountData.totalUsersAllowed}
-              onChange={handleChange}
-              type="number"
-              className="dark:bg-gray-700"
-            />
+            {/* Total Users Allowed — with "All Users" quick-fill button */}
+            <Box className="flex items-center gap-2">
+              <TextField
+                label="Total Users Allowed"
+                variant="outlined"
+                fullWidth
+                name="totalUsersAllowed"
+                value={discountData.totalUsersAllowed}
+                onChange={handleChange}
+                type="number"
+                className="dark:bg-gray-700"
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() =>
+                  setDiscountData((prev) => ({
+                    ...prev,
+                    totalUsersAllowed: totalUsers ?? "",
+                  }))
+                }
+                disabled={!totalUsers}
+                title={
+                  totalUsers
+                    ? `Fill with total registered users (${totalUsers})`
+                    : "Loading user count…"
+                }
+                className="shrink-0 whitespace-nowrap"
+                sx={{ minWidth: "max-content" }}
+              >
+                {totalUsers ? `All Users (${totalUsers})` : "All Users"}
+              </Button>
+            </Box>
             <TextField
               label="Start Date"
               variant="outlined"
