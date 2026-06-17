@@ -101,6 +101,28 @@ export const deleteAllOrders = createAsyncThunk(
   }
 );
 
+export const verifyPayment = createAsyncThunk(
+  "adminOrders/verifyPayment",
+  async ({ orderId, action, rejectionReason }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axiosInstance.put(
+        `/api/order/admin/verify-payment/${orderId}`,
+        { action, rejectionReason },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
+      return response.data.order;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 const adminOrdersSlice = createSlice({
   name: "adminOrders",
   initialState: {
@@ -141,6 +163,21 @@ const adminOrdersSlice = createSlice({
         );
       })
       .addCase(updateOrderStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(verifyPayment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyPayment.fulfilled, (state, action) => {
+        state.loading = false;
+        state.orders = state.orders.map((order) =>
+          order._id === action.payload._id ? action.payload : order
+        );
+      })
+      .addCase(verifyPayment.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

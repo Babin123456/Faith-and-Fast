@@ -8,6 +8,7 @@ import {
   X,
   BarChart3,
   Tag,
+  CreditCard,
 } from "lucide-react";
 import AdminUsers from "./AdminUsers";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +17,7 @@ import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import AdminOrdersPage from "./AdminOrdersPage";
 import AdminAnalytics from "./AdminAnalytics";
+import AdminPaymentSettings from "./AdminPaymentSettings";
 
 const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -51,6 +53,8 @@ const AdminDashboard = () => {
         return <AdminOrdersPage />;
       case "Analytics":
         return <AdminAnalytics />;
+      case "Payment Settings":
+        return <AdminPaymentSettings />;
 
       default:
         return null;
@@ -80,6 +84,7 @@ const AdminDashboard = () => {
             { icon: Package, text: "Orders" },
             { icon: BarChart3, text: "Analytics" },
             { icon: Tag, text: "Discounts", path: "/admin/discounts" },
+            { icon: CreditCard, text: "Payment Settings" },
           ].map((item) => (
             <button
               key={item.text}
