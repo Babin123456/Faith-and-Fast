@@ -187,7 +187,7 @@ const Products = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full ml-3 bg-transparent focus:outline-none text-gray-800 dark:text-gray-100 text-lg"
+            className="w-full ml-3 bg-transparent focus:outline-none text-gray-800 dark:text-gray-100 text-sm sm:text-lg"
             placeholder=" "
           />
           <div className="absolute pointer-events-none ml-10 text-gray-500 dark:text-gray-400">
@@ -410,13 +410,13 @@ const Products = () => {
           {/* Product Grid */}
           <motion.div variants={childVariants} className="flex-1">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
+              <h2 className="text-xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">
                 All Products
               </h2>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 shadow-sm focus:ring-2 focus:ring-yellow-500 transition duration-200"
+                className="px-2 py-1 sm:px-4 sm:py-2 text-sm sm:text-base bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 shadow-sm focus:ring-2 focus:ring-yellow-500 transition duration-200"
               >
                 <option value="relevant">Sort by: Relevant</option>
                 <option value="price-low-high">Price: Low to High</option>
@@ -426,7 +426,7 @@ const Products = () => {
 
             <motion.div
               layout
-              className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
             >
               <AnimatePresence>
                 {loading ? (
@@ -475,14 +475,14 @@ const Products = () => {
                         </div>
                       </div>
 
-                      <div className="p-4">
-                        <h3 className="font-semibold text-lg mb-2 line-clamp-2 text-gray-800 dark:text-gray-100">
+                      <div className="p-2 sm:p-4">
+                        <h3 className="font-semibold text-sm sm:text-lg mb-2 line-clamp-2 text-gray-800 dark:text-gray-100">
                           {item.name}
                         </h3>
 
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                            <span className="text-base sm:text-xl font-bold text-gray-900 dark:text-gray-100">
                               ₹
                               {(
                                 item.price -
