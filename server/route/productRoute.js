@@ -12,6 +12,10 @@ import {
   searchProduct,
   updateProductDetails,
 } from "../controllers/productController.js";
+import {
+  getTrendingProducts,
+  getFrequentlyBoughtTogether,
+} from "../controllers/recommendationController.js";
 import admin from "../middleware/Admin.js";
 import auth from "../middleware/auth.js";
 import upload from "../middleware/multer.js";
@@ -45,6 +49,13 @@ productRouter.delete("/delete/:deleteId", auth, admin, deleteProduct);
 productRouter.post("/search", searchProduct);
 
 productRouter.get("/similar", getSimilarProducts);
+
+productRouter.get("/trending", getTrendingProducts);
+
+productRouter.get(
+  "/frequently-bought-together/:productId",
+  getFrequentlyBoughtTogether
+);
 
 productRouter.get("/reviews/:productId", getProductReviews);
 

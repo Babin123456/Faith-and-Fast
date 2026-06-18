@@ -7,10 +7,13 @@ import {
   getProductReviews,
   postReview,
   getSimilarProducts,
+  getTrendingProducts,
+  getFrequentlyBoughtTogether,
 } from "@/store/product-slice/productDetails";
 import ImageSlider from "./ImageSlider";
 import ProductCard from "./ProductCard";
 import RecentlyViewed from "../components/RecentlyViewed";
+import RecommendationSection from "../components/RecommendationSection";
 import ProductDetailsSkeleton from "../components/skeletons/ProductDetailsSkeleton";
 import MetaData from "../extras/MetaData";
 import { Button, Rating } from "@mui/material";
@@ -28,6 +31,8 @@ const ProductDetails = ({ products }) => {
     product,
     reviews = [],
     similarProducts,
+    trendingProducts,
+    frequentlyBoughtTogether,
     loading,
     error,
     reviewPosting,
@@ -104,6 +109,8 @@ const ProductDetails = ({ products }) => {
   useEffect(() => {
     if (product?.category) {
       dispatch(getSimilarProducts(product.category));
+      dispatch(getTrendingProducts(8));
+      dispatch(getFrequentlyBoughtTogether(product._id));
     }
   }, [dispatch, product]);
 
@@ -719,6 +726,14 @@ const ProductDetails = ({ products }) => {
                   ))}
                 </div>
               </motion.section>
+              <RecommendationSection
+                title="Frequently Bought Together"
+                products={frequentlyBoughtTogether}
+              />
+              <RecommendationSection
+                title="Trending Now"
+                products={trendingProducts}
+              />
               <RecentlyViewed products={recentlyViewed} />
             </div>
           )}

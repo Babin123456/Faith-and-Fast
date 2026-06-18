@@ -91,10 +91,45 @@ export const getSimilarProducts = createAsyncThunk(
   }
 );
 
+export const getTrendingProducts = createAsyncThunk(
+  "product/getTrending",
+  async (limit = 8, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get("/api/product/trending", {
+        params: { limit },
+      });
+      return response.data.products;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch trending products"
+      );
+    }
+  }
+);
+
+export const getFrequentlyBoughtTogether = createAsyncThunk(
+  "product/getFrequentlyBoughtTogether",
+  async (productId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(
+        `/api/product/frequently-bought-together/${productId}`
+      );
+      return response.data.products;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Failed to fetch frequently bought together products"
+      );
+    }
+  }
+);
+
 const initialState = {
   product: null,
   reviews: [],
   similarProducts: [],
+  trendingProducts: [],
+  frequentlyBoughtTogether: [],
   loading: false,
   error: null,
   reviewPosting: false,
@@ -179,6 +214,16 @@ const productDetailsSlice = createSlice({
       .addCase(getSimilarProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      // Get Trending Products
+      .addCase(getTrendingProducts.fulfilled, (state, action) => {
+        state.trendingProducts = action.payload;
+      })
+
+      // Get Frequently Bought Together
+      .addCase(getFrequentlyBoughtTogether.fulfilled, (state, action) => {
+        state.frequentlyBoughtTogether = action.payload;
       });
   },
 });
