@@ -319,7 +319,13 @@ const OrderDetails = () => {
             </motion.div>
           </div>
 
-          <div className="flex justify-center mt-10">
+          <div className="flex flex-wrap justify-center gap-4 mt-10">
+            <Link
+              to={`/order/${order._id}/invoice`}
+              className="bg-yellow-500 hover:bg-yellow-600 dark:bg-red-600 dark:hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-300 ease-in-out"
+            >
+              View Invoice
+            </Link>
             {order.orderStatus === "PENDING" && (
               <button
                 className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"

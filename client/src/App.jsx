@@ -29,6 +29,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import VerifyEmail from "./pages/auth-page/VerifyEmail";
 import MyOrders from "./pages/my-profile/MyOrders";
 import OrderDetails from "./pages/my-profile/OrderDetails";
+import Invoice from "./pages/my-profile/Invoice";
 import CreateOrder from "./pages/orders/Checkout";
 import ProductUpdatePage from "./pages/admin/AdminUpdateProduct";
 import AdminDiscount from "./pages/admin/AdminDiscount";
@@ -94,6 +95,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <OrderDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order/:Id/invoice"
+          element={
+            <ProtectedRoute>
+              <Invoice />
             </ProtectedRoute>
           }
         />
