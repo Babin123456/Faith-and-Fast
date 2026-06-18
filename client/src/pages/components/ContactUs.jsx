@@ -2,9 +2,25 @@ import { motion } from "framer-motion";
 import { WhatsApp } from "@mui/icons-material";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import {
+  submitContactMessage,
+  resetContactState,
+} from "@/store/extra-slice/contactSlice";
 
 const ContactUs = () => {
   const [contactData, setContactData] = useState(null);
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.contact);
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const dummyData = {
@@ -30,6 +46,59 @@ const ContactUs = () => {
       setContactData(dummyData);
     }, 500);
   }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    // Clear the field-level error as the user corrects it.
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!form.name.trim()) {
+      newErrors.name = "Name is required";
+    }
+    if (!form.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(form.email.trim())) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    if (!form.message.trim()) {
+      newErrors.message = "Message is required";
+    } else if (form.message.trim().length > 2000) {
+      newErrors.message = "Message cannot exceed 2000 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!validate()) {
+      return;
+    }
+
+    dispatch(submitContactMessage(form))
+      .unwrap()
+      .then((res) => {
+        toast.success(
+          res?.message || "Your message has been sent successfully!"
+        );
+        setForm({ name: "", email: "", phone: "", message: "" });
+        setErrors({});
+        dispatch(resetContactState());
+      })
+      .catch((err) => {
+        toast.error(err || "Failed to send message. Please try again.");
+      });
+  };
 
   if (!contactData) return <p>Loading...</p>;
 
@@ -105,34 +174,64 @@ const ContactUs = () => {
             <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
               Send Us a Message
             </h2>
-            <form className="space-y-4">
-              <input
-                type="text"
-                placeholder="Your Name"
-                className="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 dark:focus:ring-red-500 transition"
-              />
-              <input
-                type="email"
-                placeholder="Your Email"
-                className="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 dark:focus:ring-red-500 transition"
-              />
-              <input
-                type="phone"
-                placeholder="Your Phone Number"
-                className="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 dark:focus:ring-red-500 transition"
-              />
-              <textarea
-                placeholder="Your Message"
-                rows="4"
-                className="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 dark:focus:ring-red-500 transition"
-              ></textarea>
+            <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+              <div>
+                <input
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Your Name"
+                  className="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 dark:focus:ring-red-500 transition"
+                />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+                )}
+              </div>
+              <div>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="Your Email"
+                  className="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 dark:focus:ring-red-500 transition"
+                />
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                )}
+              </div>
+              <div>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleChange}
+                  placeholder="Your Phone Number (optional)"
+                  className="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 dark:focus:ring-red-500 transition"
+                />
+              </div>
+              <div>
+                <textarea
+                  name="message"
+                  value={form.message}
+                  onChange={handleChange}
+                  placeholder="Your Message"
+                  rows="4"
+                  className="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 dark:focus:ring-red-500 transition"
+                ></textarea>
+                {errors.message && (
+                  <p className="mt-1 text-sm text-red-500">{errors.message}</p>
+                )}
+              </div>
               <motion.button
                 type="submit"
-                className="w-full px-6 py-3 bg-yellow-500 dark:bg-red-600 text-white font-semibold rounded-lg shadow-lg hover:bg-gray-800 dark:hover:bg-gray-700 transition"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                disabled={loading}
+                className="w-full px-6 py-3 bg-yellow-500 dark:bg-red-600 text-white font-semibold rounded-lg shadow-lg hover:bg-gray-800 dark:hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                whileHover={{ scale: loading ? 1 : 1.05 }}
+                whileTap={{ scale: loading ? 1 : 0.95 }}
               >
-                Send Message
+                {loading ? "Sending..." : "Send Message"}
               </motion.button>
             </form>
           </motion.div>
