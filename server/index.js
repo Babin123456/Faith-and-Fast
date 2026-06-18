@@ -10,15 +10,6 @@ import connectDB from "./config/connectDB.js";
 import errorMiddleware from "./middleware/error.js";
 dotenv.config();
 
-process.on("unhandledRejection", (err) => {
-  console.log(`Error: ${err.message}`);
-  console.log("Shutting down the server due to Unhandled Promise Rejection");
-
-  server.close(() => {
-    process.exit(1);
-  });
-});
-
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -91,14 +82,36 @@ app.use("/api/user", userRouter);
 app.use("/api/wishlist", wishListRouter);
 
 connectDB().then(() => {
-  app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
-});
+  const server = app.listen(PORT, () =>
+    console.log(`Server is running on port ${PORT}`)
+  );
 
-process.on("unhandledRejection", (err) => {
-  console.error(`Error: ${err.message}`);
-  console.error(`Shutting down the server due to Unhandled Promise Rejection`);
+  // Graceful shutdown helper — close the HTTP server so in-flight requests
+  // can finish before the process exits. Log every exit reason distinctly so
+  // operators can tell a crash from a signal-triggered stop in the logs.
+  const shutdown = (reason, code = 1) => {
+    console.error(`[shutdown] reason=${reason} code=${code}`);
+    server.close(() => process.exit(code));
+    // Safety net: force-exit after 10 s if connections linger.
+    setTimeout(() => process.exit(code), 10_000).unref();
+  };
 
-  server.close(() => {
-    process.exit(1);
+  // Single unhandledRejection handler (was duplicated — both fired on every
+  // unhandled rejection, causing a race between two concurrent shutdowns).
+  process.on("unhandledRejection", (err) => {
+    console.error(`[unhandledRejection] ${err?.message ?? err}`);
+    shutdown("unhandledRejection");
   });
+
+  // Synchronous throw that escaped all try/catch blocks.
+  process.on("uncaughtException", (err) => {
+    console.error(`[uncaughtException] ${err?.message ?? err}`);
+    shutdown("uncaughtException");
+  });
+
+  // Container / PM2 / Heroku stop signal — exit cleanly with code 0.
+  process.on("SIGTERM", () => shutdown("SIGTERM", 0));
+
+  // Ctrl-C in development — same clean exit.
+  process.on("SIGINT", () => shutdown("SIGINT", 0));
 });
