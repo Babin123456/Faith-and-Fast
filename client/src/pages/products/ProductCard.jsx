@@ -16,7 +16,7 @@ const ProductCard = ({ product }) => {
         <img
           src={imageUrl}
           alt={product.name || "Product Image"}
-          className="w-full h-64 object-fit"
+          className="w-full h-40 sm:h-64 object-cover"
           onError={(e) => (e.target.src = "/fallback-image.jpg")}
         />
       </Link>
