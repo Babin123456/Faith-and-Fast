@@ -1,5 +1,6 @@
 import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import OrderModel from "../models/orderModel.js";
+import Product from "../models/productModel.js";
 
 /**
  * Order Analytics (Admin)
@@ -211,6 +212,180 @@ export const getOrderAnalytics = catchAsyncErrors(async (req, res) => {
       count: p.count,
     }));
 
+    // ===== Advanced reporting (#62) — all additive, no existing output changed =====
+
+    // ----- 5. Period-over-period revenue comparison -----
+    // Current window = the selected range when both dates are given, otherwise
+    // the trailing 30 days. Previous window = the immediately preceding window of
+    // equal length, so "% change vs previous period" is always meaningful.
+    const now = new Date();
+    const startValid = startDate && !isNaN(new Date(startDate).getTime());
+    const endValid = endDate && !isNaN(new Date(endDate).getTime());
+
+    let curStart;
+    let curEnd;
+    if (startValid && endValid) {
+      curStart = new Date(startDate);
+      curEnd = new Date(endDate);
+      curEnd.setHours(23, 59, 59, 999);
+    } else {
+      curEnd = now;
+      curStart = new Date(now);
+      curStart.setDate(curStart.getDate() - 30);
+    }
+    const windowMs = curEnd.getTime() - curStart.getTime();
+    const prevEnd = new Date(curStart.getTime() - 1);
+    const prevStart = new Date(prevEnd.getTime() - windowMs);
+
+    const periodRevenue = async (from, to) => {
+      const result = await OrderModel.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: from, $lte: to },
+            orderStatus: { $ne: "CANCELLED" },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            revenue: { $sum: "$totalAmount" },
+            orders: { $sum: 1 },
+          },
+        },
+      ]);
+      return { revenue: result[0]?.revenue || 0, orders: result[0]?.orders || 0 };
+    };
+
+    const pctChange = (cur, prev) => {
+      if (prev === 0) return cur > 0 ? 100 : 0;
+      return ((cur - prev) / prev) * 100;
+    };
+
+    // ----- 6. Customer trends (new vs repeat, top spenders) -----
+    const customerGroupsPipeline = [
+      { $match: revenueMatch },
+      {
+        $group: {
+          _id: "$user",
+          orders: { $sum: 1 },
+          spend: { $sum: "$totalAmount" },
+        },
+      },
+    ];
+
+    const topCustomersPipeline = [
+      { $match: revenueMatch },
+      {
+        $group: {
+          _id: "$user",
+          orders: { $sum: 1 },
+          spend: { $sum: "$totalAmount" },
+        },
+      },
+      { $sort: { spend: -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          userId: "$_id",
+          orders: 1,
+          spend: 1,
+          name: {
+            $ifNull: [{ $arrayElemAt: ["$user.name", 0] }, "Unknown customer"],
+          },
+          email: { $ifNull: [{ $arrayElemAt: ["$user.email", 0] }, ""] },
+        },
+      },
+    ];
+
+    // ----- 7. Inventory analytics (from the product catalogue) -----
+    const lowStockThreshold =
+      Number(req.query.lowStockThreshold) > 0
+        ? Number(req.query.lowStockThreshold)
+        : 5;
+
+    const inventoryPipeline = [
+      {
+        $group: {
+          _id: null,
+          totalProducts: { $sum: 1 },
+          outOfStock: {
+            $sum: { $cond: [{ $lte: ["$stock", 0] }, 1, 0] },
+          },
+          lowStock: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gt: ["$stock", 0] },
+                    { $lte: ["$stock", lowStockThreshold] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          inventoryValue: {
+            $sum: {
+              $multiply: [
+                { $ifNull: ["$stock", 0] },
+                { $ifNull: ["$price", 0] },
+              ],
+            },
+          },
+        },
+      },
+    ];
+
+    const [curPeriod, prevPeriod, customerGroups, topCustomers, inventoryAgg] =
+      await Promise.all([
+        periodRevenue(curStart, curEnd),
+        periodRevenue(prevStart, prevEnd),
+        OrderModel.aggregate(customerGroupsPipeline),
+        OrderModel.aggregate(topCustomersPipeline),
+        Product.aggregate(inventoryPipeline),
+      ]);
+
+    const totalCustomers = customerGroups.length;
+    const repeatCustomers = customerGroups.filter((c) => c.orders > 1).length;
+    const newCustomers = totalCustomers - repeatCustomers;
+
+    const inv = inventoryAgg[0] || {};
+
+    const comparison = {
+      current: curPeriod,
+      previous: prevPeriod,
+      revenueChange: pctChange(curPeriod.revenue, prevPeriod.revenue),
+      ordersChange: pctChange(curPeriod.orders, prevPeriod.orders),
+      usedSelectedRange: Boolean(startValid && endValid),
+    };
+
+    const customers = {
+      totalCustomers,
+      newCustomers,
+      repeatCustomers,
+      repeatRate:
+        totalCustomers > 0 ? (repeatCustomers / totalCustomers) * 100 : 0,
+      topCustomers,
+    };
+
+    const inventory = {
+      totalProducts: inv.totalProducts || 0,
+      outOfStock: inv.outOfStock || 0,
+      lowStock: inv.lowStock || 0,
+      inventoryValue: inv.inventoryValue || 0,
+      lowStockThreshold,
+    };
+
     return res.status(200).json({
       success: true,
       analytics: {
@@ -226,6 +401,9 @@ export const getOrderAnalytics = catchAsyncErrors(async (req, res) => {
         topProducts,
         statusDistribution,
         paymentDistribution,
+        comparison,
+        customers,
+        inventory,
         range: {
           startDate: startDate || null,
           endDate: endDate || null,
