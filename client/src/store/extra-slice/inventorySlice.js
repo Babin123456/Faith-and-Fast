@@ -5,8 +5,13 @@ export const getInventoryOverview = createAsyncThunk(
   "inventory/getInventoryOverview",
   async (threshold = 5, { rejectWithValue }) => {
     try {
+      const token = localStorage.getItem("token");
       const response = await axiosInstance.get("/api/inventory/overview", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         params: { threshold },
+        withCredentials: true,
       });
       return response.data;
     } catch (error) {
@@ -21,9 +26,17 @@ export const bulkUpdateStock = createAsyncThunk(
   "inventory/bulkUpdateStock",
   async (updates, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put("/api/inventory/bulk-update", {
-        updates,
-      });
+      const token = localStorage.getItem("token");
+      const response = await axiosInstance.put(
+        "/api/inventory/bulk-update",
+        { updates },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(
