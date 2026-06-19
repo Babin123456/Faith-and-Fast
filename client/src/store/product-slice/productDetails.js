@@ -79,9 +79,28 @@ export const deleteReview = createAsyncThunk(
 
 export const getSimilarProducts = createAsyncThunk(
   "product/getSimilar",
-  async (_, { rejectWithValue }) => {
+  async (params = {}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get("/api/product/similar");
+      // Accept either a category string (legacy callers) or an options object,
+      // and forward the criteria as query params so results are actually
+      // category/subcategory-relevant and exclude the current product.
+      const query =
+        typeof params === "string"
+          ? { category: params }
+          : {
+              ...(params.category ? { category: params.category } : {}),
+              ...(params.subcategory
+                ? { subcategory: params.subcategory }
+                : {}),
+              ...(params.coloroptions
+                ? { coloroptions: params.coloroptions }
+                : {}),
+              ...(params.exclude ? { exclude: params.exclude } : {}),
+            };
+
+      const response = await axiosInstance.get("/api/product/similar", {
+        params: query,
+      });
       return response.data.similarProducts;
     } catch (error) {
       return rejectWithValue(
