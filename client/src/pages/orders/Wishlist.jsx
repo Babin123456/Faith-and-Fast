@@ -10,6 +10,8 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import WishlistSkeleton from "../components/skeletons/WishlistSkeleton";
+import EmptyState from "../components/EmptyState";
+import { Heart } from "lucide-react";
 
 const WishlistPage = () => {
   const dispatch = useDispatch();
@@ -50,14 +52,15 @@ const WishlistPage = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <AnimatePresence>
           {WishListItems.length === 0 ? (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="col-span-full text-center text-gray-600"
-            >
-              Your wishlist is empty.
-            </motion.p>
+            <div className="col-span-full">
+              <EmptyState
+                icon={Heart}
+                title="Your wishlist is empty"
+                message="Save the items you love and they'll appear here. Start exploring our collection."
+                actionLabel="Browse Products"
+                actionTo="/products"
+              />
+            </div>
           ) : (
             WishListItems.map((item) => (
               <motion.div
