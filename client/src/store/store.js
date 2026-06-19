@@ -16,6 +16,7 @@ import adminOrdersReducer from "./order-slice/AdminOrderSlice";
 import adminAnalyticsReducer from "./order-slice/analyticsSlice";
 import paymentSettingsReducer from "./extra-slice/paymentSettingsSlice";
 import contactReducer from "./extra-slice/contactSlice";
+import inventoryReducer from "./extra-slice/inventorySlice";
 
 const store = configureStore({
   reducer: {
@@ -36,6 +37,7 @@ const store = configureStore({
     adminAnalytics: adminAnalyticsReducer,
     paymentSettings: paymentSettingsReducer,
     contact: contactReducer,
+    inventory: inventoryReducer,
   },
 });
 
