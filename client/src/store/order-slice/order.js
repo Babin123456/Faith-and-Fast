@@ -74,6 +74,11 @@ export const myOrders = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
+      // No orders for this user comes back as a 404. Treat it as an empty
+      // (non-error) result so the page shows only the EmptyState.
+      if (error.response?.status === 404) {
+        return { orders: [] };
+      }
       return rejectWithValue(error.response.data);
     }
   }
@@ -154,6 +159,7 @@ export const orderSlice = createSlice({
       })
       .addCase(myOrders.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(myOrders.fulfilled, (state, action) => {
         state.loading = false;

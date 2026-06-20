@@ -39,6 +39,11 @@ export const getCartItems = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
+      // An empty cart is returned by the API as a 404. Treat it as an
+      // empty (non-error) result so the page shows only the EmptyState.
+      if (error.response?.status === 404) {
+        return { data: [], error: false, success: true };
+      }
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch cart items"
       );
@@ -152,6 +157,7 @@ const cartSlice = createSlice({
 
       .addCase(getCartItems.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(getCartItems.fulfilled, (state, action) => {
         state.loading = false;
