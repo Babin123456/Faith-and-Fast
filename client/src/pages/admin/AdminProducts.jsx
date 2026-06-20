@@ -60,9 +60,9 @@ const AdminProducts = () => {
       });
   };
 
-  // const handleUpdate = (id) => {
-  //   navigate(`/admin/product/update/${id}`);
-  // };
+  const handleUpdate = (id) => {
+    navigate(`/admin/product/update/${id}`);
+  };
 
   const handleDialogClose = () => {
     setOpenDeleteDialog(false);
@@ -170,13 +170,12 @@ const AdminProducts = () => {
                         </Link>
                       </td>
                       <td className="p-4 text-center">
-                        {/* <Link
-                          to={`/admin/product/update/${prod._id}`}
-                          className="text-blue-500 hover:underline mr-4"
+                        <button
                           onClick={() => handleUpdate(prod._id)}
+                          className="text-blue-500 hover:underline mr-4"
                         >
                           Edit
-                        </Link> */}
+                        </button>
                         <button
                           onClick={() => handleDeleteDialogOpen(prod._id)}
                           className="text-red-500 hover:underline"
@@ -188,7 +187,7 @@ const AdminProducts = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="text-center text-gray-500 p-4">
+                    <td colSpan="7" className="text-center text-gray-500 p-4">
                       No products found.
                     </td>
                   </tr>
