@@ -25,6 +25,12 @@ import {
   Package,
   TrendingUp,
   RefreshCw,
+  Users,
+  Boxes,
+  AlertTriangle,
+  Download,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 import { getOrderAnalytics } from "@/store/order-slice/analyticsSlice";
 import MetaData from "../extras/MetaData";
@@ -52,7 +58,7 @@ const formatNumber = (value) =>
   new Intl.NumberFormat("en-IN").format(Number(value) || 0);
 
 // Reusable summary card.
-const StatCard = ({ icon: Icon, label, value, accent }) => (
+const StatCard = ({ icon: Icon, label, value, accent, delta }) => (
   <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 flex items-center gap-4">
     <div
       className={`shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${accent}`}
@@ -66,6 +72,22 @@ const StatCard = ({ icon: Icon, label, value, accent }) => (
       <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
         {value}
       </p>
+      {typeof delta === "number" && Number.isFinite(delta) ? (
+        <p
+          className={`text-xs font-medium flex items-center gap-0.5 ${
+            delta >= 0
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-red-600 dark:text-red-400"
+          }`}
+        >
+          {delta >= 0 ? (
+            <ArrowUpRight className="w-3 h-3" />
+          ) : (
+            <ArrowDownRight className="w-3 h-3" />
+          )}
+          {Math.abs(delta).toFixed(1)}% vs prev
+        </p>
+      ) : null}
     </div>
   </div>
 );
@@ -75,6 +97,7 @@ StatCard.propTypes = {
   label: PropTypes.string.isRequired,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   accent: PropTypes.string.isRequired,
+  delta: PropTypes.number,
 };
 
 // Reusable chart frame with title + graceful empty state.
@@ -156,6 +179,74 @@ const AdminAnalytics = () => {
     orderGrowth.length > 0 ||
     topProducts.length > 0;
 
+  const comparison = analytics?.comparison;
+  const customers = analytics?.customers;
+  const inventory = analytics?.inventory;
+  const topCustomers = useMemo(
+    () => customers?.topCustomers || [],
+    [customers]
+  );
+  const paidRate = summary?.totalOrders
+    ? (summary.paidOrders / summary.totalOrders) * 100
+    : 0;
+  const repeatRate = customers?.repeatRate || 0;
+  const customerSplit = useMemo(
+    () => [
+      { name: "New", value: customers?.newCustomers || 0 },
+      { name: "Repeat", value: customers?.repeatCustomers || 0 },
+    ],
+    [customers]
+  );
+
+  const handleExportCsv = () => {
+    if (!analytics) return;
+    const rows = [];
+    rows.push(["Faith AND Fast - Analytics Export"]);
+    rows.push(["Generated", new Date().toLocaleString()]);
+    rows.push([]);
+    rows.push(["Summary"]);
+    rows.push(["Total Sales", summary?.totalRevenue ?? 0]);
+    rows.push(["Total Orders", summary?.totalOrders ?? 0]);
+    rows.push(["Paid Orders", summary?.paidOrders ?? 0]);
+    rows.push(["Average Order Value", summary?.averageOrderValue ?? 0]);
+    rows.push(["Units Sold", summary?.totalUnits ?? 0]);
+    rows.push([]);
+    rows.push(["Revenue Trend"]);
+    rows.push(["Period", "Revenue", "Orders"]);
+    revenueTrend.forEach((r) => rows.push([r.period, r.revenue, r.orders]));
+    rows.push([]);
+    rows.push(["Top Products"]);
+    rows.push(["Name", "Units Sold", "Revenue"]);
+    topProducts.forEach((p) => rows.push([p.name, p.unitsSold, p.revenue]));
+    if (topCustomers.length) {
+      rows.push([]);
+      rows.push(["Top Customers"]);
+      rows.push(["Name", "Email", "Orders", "Spend"]);
+      topCustomers.forEach((c) =>
+        rows.push([c.name, c.email, c.orders, c.spend])
+      );
+    }
+    const csv = rows
+      .map((r) =>
+        r
+          .map((cell) => {
+            const str = String(cell ?? "");
+            return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+          })
+          .join(",")
+      )
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `analytics-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       <MetaData
@@ -227,6 +318,14 @@ const AdminAnalytics = () => {
               <RefreshCw className="w-4 h-4" />
               Reset
             </button>
+            <button
+              onClick={handleExportCsv}
+              disabled={!hasAnyData}
+              className="px-3 py-1.5 rounded-md bg-gray-800 hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-white flex items-center gap-1 dark:bg-gray-700 dark:hover:bg-gray-600"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
           </div>
         </div>
       </div>
@@ -254,12 +353,14 @@ const AdminAnalytics = () => {
               label="Total Sales"
               value={formatCurrency(summary?.totalRevenue)}
               accent="bg-emerald-500"
+              delta={comparison?.revenueChange}
             />
             <StatCard
               icon={ShoppingCart}
               label="Total Orders"
               value={formatNumber(summary?.totalOrders)}
               accent="bg-blue-500"
+              delta={comparison?.ordersChange}
             />
             <StatCard
               icon={TrendingUp}
@@ -439,6 +540,126 @@ const AdminAnalytics = () => {
                 </PieChart>
               </ResponsiveContainer>
             </ChartCard>
+          </div>
+
+          {/* Advanced KPIs: conversion, customers, inventory */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <StatCard
+              icon={TrendingUp}
+              label="Paid Order Rate"
+              value={`${paidRate.toFixed(1)}%`}
+              accent="bg-teal-500"
+            />
+            <StatCard
+              icon={Users}
+              label="Repeat Customer Rate"
+              value={`${repeatRate.toFixed(1)}%`}
+              accent="bg-fuchsia-500"
+            />
+            <StatCard
+              icon={Boxes}
+              label="Inventory Value"
+              value={formatCurrency(inventory?.inventoryValue)}
+              accent="bg-indigo-500"
+            />
+            <StatCard
+              icon={AlertTriangle}
+              label="Low / Out of Stock"
+              value={`${formatNumber(inventory?.lowStock)} / ${formatNumber(
+                inventory?.outOfStock
+              )}`}
+              accent="bg-orange-500"
+            />
+          </div>
+
+          {/* Customer insights */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <ChartCard
+              title="New vs Repeat Customers"
+              subtitle="Buyers in the selected range"
+              isEmpty={(customers?.totalCustomers || 0) === 0}
+              emptyText="No customers in this range."
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={customerSplit}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={90}
+                    label={(entry) => `${entry.name}: ${entry.value}`}
+                    labelLine={false}
+                    fontSize={11}
+                  >
+                    {customerSplit.map((entry, index) => (
+                      <Cell
+                        key={entry.name}
+                        fill={PIE_FALLBACK[index % PIE_FALLBACK.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <ReTooltip
+                    formatter={(value) => formatNumber(value)}
+                    contentStyle={{ fontSize: 12 }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            {/* Top customers */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+              <div className="mb-3">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-100">
+                  Top Customers
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  By total spend (excludes cancelled orders)
+                </p>
+              </div>
+              {topCustomers.length === 0 ? (
+                <div className="h-[260px] flex items-center justify-center text-center text-gray-400 dark:text-gray-500 text-sm">
+                  No customer spend in this range.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
+                        <th className="py-2 pr-2">Customer</th>
+                        <th className="py-2 px-2 text-right">Orders</th>
+                        <th className="py-2 pl-2 text-right">Spend</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topCustomers.map((c) => (
+                        <tr
+                          key={c.userId || c.email}
+                          className="border-b border-gray-50 dark:border-gray-700/50"
+                        >
+                          <td className="py-2 pr-2">
+                            <div className="font-medium text-gray-900 dark:text-white truncate max-w-[160px]">
+                              {c.name}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[160px]">
+                              {c.email}
+                            </div>
+                          </td>
+                          <td className="py-2 px-2 text-right text-gray-700 dark:text-gray-200">
+                            {formatNumber(c.orders)}
+                          </td>
+                          <td className="py-2 pl-2 text-right font-semibold text-gray-900 dark:text-white">
+                            {formatCurrency(c.spend)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}
