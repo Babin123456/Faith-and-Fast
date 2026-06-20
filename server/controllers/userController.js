@@ -355,7 +355,7 @@ export const forgotPassword = catchAsyncErrors(async (req, res) => {
       });
     }
 
-    await sendEmail({
+    const emailResponse = await sendEmail({
       sendTo: email,
       subject: "Forgot password from Faith AND Fast",
       html: forgotPasswordTemplate({
@@ -363,6 +363,14 @@ export const forgotPassword = catchAsyncErrors(async (req, res) => {
         otp: otp,
       }),
     });
+
+    if (!emailResponse) {
+      return res.status(500).json({
+        message: "Failed to send password reset email. Please try again later.",
+        error: true,
+        success: false,
+      });
+    }
 
     return res.json({
       message:
