@@ -14,6 +14,8 @@ import {
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { myOrders } from "@/store/order-slice/order";
+import EmptyState from "../components/EmptyState";
+import { Package } from "lucide-react";
 import { jsPDF } from "jspdf";
 
 const MyOrders = () => {
@@ -351,9 +353,13 @@ const MyOrders = () => {
               {typeof error === "string" ? error : "No Orders Available"}
             </Alert>
           ) : filteredProducts.length === 0 ? (
-            <Alert severity="info" className="text-sm sm:text-base">
-              No orders found
-            </Alert>
+            <EmptyState
+              icon={Package}
+              title="No orders yet"
+              message="When you place an order it will appear here, so you can track and revisit it anytime."
+              actionLabel="Start Shopping"
+              actionTo="/products"
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-4">
               <AnimatePresence>

@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import { Country, State, City } from "country-state-city";
 import MetaData from "../extras/MetaData";
+import EmptyState from "../components/EmptyState";
 
 const SavedAddress = () => {
   const dispatch = useDispatch();
@@ -231,7 +232,13 @@ const SavedAddress = () => {
               </motion.div>
             ))
           ) : (
-            <p className="text-center text-gray-500">No addresses found.</p>
+            <EmptyState
+              icon={MapPin}
+              title="No addresses saved"
+              message="Add a delivery address to make checkout faster next time."
+              actionLabel="Add Address"
+              onAction={() => setIsAdding(true)}
+            />
           )}
         </div>
       </div>

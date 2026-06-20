@@ -11,8 +11,10 @@ import {
 import MetaData from "../extras/MetaData";
 import CartSkeleton from "../components/skeletons/CartSkeleton";
 import RecommendationSection from "../components/RecommendationSection";
+import EmptyState from "../components/EmptyState";
+import { ShoppingCart } from "lucide-react";
 import { getTrendingProducts } from "@/store/product-slice/productDetails";
-import { Button, IconButton } from "@mui/material";
+import { IconButton } from "@mui/material";
 import { ShoppingCartCheckout } from "@mui/icons-material";
 
 const Cart = () => {
@@ -97,18 +99,13 @@ const Cart = () => {
         {error && <p className="text-red-500 text-center py-10">{error}</p>}
 
         {cartItems.length === 0 ? (
-          <motion.div
-            className="text-center py-10 dark:text-gray-300"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <p className="text-lg mb-4">Your cart is empty.</p>
-            <Link to="/products">
-              <Button variant="contained" color="primary">
-                Continue Shopping
-              </Button>
-            </Link>
-          </motion.div>
+          <EmptyState
+            icon={ShoppingCart}
+            title="Your cart is empty"
+            message="Looks like you haven't added anything yet. Find something you love and add it to your cart."
+            actionLabel="Continue Shopping"
+            actionTo="/products"
+          />
         ) : (
           <div className="space-y-6">
             <AnimatePresence>
