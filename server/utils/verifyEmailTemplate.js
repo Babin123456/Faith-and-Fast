@@ -1,11 +1,6 @@
 const verifyEmailTemplate = ({ name, otp }) => {
   return `
     <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 30px; border-radius: 10px; background: #fff; border: 1px solid #ddd; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);">
-      
-      <!-- Logo -->
-      <div style="text-align: center;">
-        <img src="http://localhost:5173/src/assets/logo-light.png" alt="Faith AND Fast" style="max-width: 180px; margin-bottom: 20px;">
-      </div>
   
       <!-- Greeting -->
       <p style="font-size: 20px; font-weight: bold;">Hello ${name},</p>
@@ -42,7 +37,7 @@ const verifyEmailTemplate = ({ name, otp }) => {
       <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
       <p style="font-size: 12px; text-align: center; color: #777;">
         Need help? Contact us at 
-        <a href="mailto:support@faithandfast.com" style="color: #ff8c00; text-decoration: none;">support@faithandfast.com</a>
+        <a href="mailto:sahilrv191@gmail.com" style="color: #ff8c00; text-decoration: none;">support@faithandfast.com</a>
       </p>
     </div>
   `;

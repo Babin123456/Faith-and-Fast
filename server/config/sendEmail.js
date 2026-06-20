@@ -4,9 +4,9 @@ dotenv.config();
 
 // Sender + retry behaviour are configurable via environment variables, with
 // sensible defaults so existing deployments keep working unchanged.
-const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || "support@faithandfast.com";
+const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL;
 const SENDER_NAME = process.env.BREVO_SENDER_NAME || "Faith AND Fast";
-const MAX_RETRIES = Number(process.env.EMAIL_MAX_RETRIES) || 2;
+const MAX_RETRIES = Number(process.env.EMAIL_MAX_RETRIES) || 5;
 const RETRY_DELAY_MS = Number(process.env.EMAIL_RETRY_DELAY_MS) || 1000;
 
 // Validate required configuration at startup so a missing key fails loudly here
