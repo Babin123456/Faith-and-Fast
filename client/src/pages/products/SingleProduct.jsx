@@ -108,7 +108,13 @@ const ProductDetails = ({ products }) => {
 
   useEffect(() => {
     if (product?.category) {
-      dispatch(getSimilarProducts(product.category));
+      dispatch(
+        getSimilarProducts({
+          category: product.category,
+          subcategory: product.subcategory,
+          exclude: product._id,
+        })
+      );
       dispatch(getTrendingProducts(8));
       dispatch(getFrequentlyBoughtTogether(product._id));
     }
@@ -143,8 +149,17 @@ const ProductDetails = ({ products }) => {
 
   useEffect(() => {
     const combined = [...(similarProducts || []), ...(products || [])];
-    setRandomSimilar(combined.sort(() => Math.random() - 0.5).slice(0, 6));
-  }, [similarProducts, products]);
+    // Exclude the product currently being viewed and de-duplicate by id so the
+    // "You Might Also Like" grid never shows the same product twice or itself.
+    const seen = new Set();
+    const unique = combined.filter((item) => {
+      if (!item || !item._id || item._id === product?._id) return false;
+      if (seen.has(item._id)) return false;
+      seen.add(item._id);
+      return true;
+    });
+    setRandomSimilar(unique.sort(() => Math.random() - 0.5).slice(0, 6));
+  }, [similarProducts, products, product]);
 
   useEffect(() => {
     if (product) {

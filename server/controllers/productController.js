@@ -414,7 +414,7 @@ export const getProductByFilter = catchAsyncErrors(async (req, res) => {
 
 export const getSimilarProducts = catchAsyncErrors(async (req, res) => {
   try {
-    const { category, subcategory, color, coloroptions } = req.query;
+    const { category, subcategory, color, coloroptions, exclude } = req.query;
 
     let filter = { $or: [] };
 
@@ -425,6 +425,9 @@ export const getSimilarProducts = catchAsyncErrors(async (req, res) => {
       filter.$or.push({ coloroptions: { $in: coloroptions.split(",") } });
 
     if (filter.$or.length === 0) filter = {};
+
+    // Never recommend the product the user is already viewing.
+    if (exclude) filter._id = { $ne: exclude };
 
     const similarProducts = await ProductModel.find(filter).limit(10);
 
