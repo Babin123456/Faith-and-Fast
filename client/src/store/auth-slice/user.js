@@ -51,8 +51,10 @@ export const signupUser = createAsyncThunk(
         }
       );
 
-      if (!response.data || !response.data.token || !response.data.user) {
-        throw new Error("Invalid response from server");
+      if (!response.data || !response.data.success) {
+        return rejectWithValue(
+          response.data || { message: "Registration failed. Please try again." }
+        );
       }
 
       return response.data;
@@ -340,9 +342,12 @@ const authSlice = createSlice({
       })
       .addCase(signupUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.isAuthenticated = true;
+        // Registration returns the created user under `data` and does NOT issue a
+        // token (the account is only logged in after email verification + login).
+        // Store the user so the verify-email step knows which address to confirm,
+        // but keep the session unauthenticated.
+        state.user = action.payload.data || null;
+        state.success = true;
       })
       .addCase(signupUser.rejected, (state, action) => {
         state.loading = false;

@@ -25,9 +25,23 @@ const SignUp = () => {
   useEffect(() => {}, [user, loading, navigate, dispatch]);
   const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(signupUser({ name, email, password }));
-    toast.success("Successfully Register User");
-    navigate("/login");
+
+    if (!name || !email || !password) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    try {
+      // Wait for the actual result before deciding success vs failure.
+      await dispatch(signupUser({ name, email, password })).unwrap();
+      toast.success(
+        "Registration successful! Please check your email for the OTP."
+      );
+      // Go straight to OTP entry — the account is not verified yet.
+      navigate("/verify-email");
+    } catch {
+      // Failure message is surfaced by the error effect below.
+    }
   };
 
   useEffect(() => {
