@@ -38,6 +38,11 @@ export const getWishListItems = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
+      // An empty wishlist is returned by the API as a 404. Treat it as an
+      // empty (non-error) result so the page shows only the EmptyState.
+      if (error.response?.status === 404) {
+        return { data: [], error: false, success: true };
+      }
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch WishList items"
       );
@@ -117,6 +122,7 @@ const WishListSlice = createSlice({
 
       .addCase(getWishListItems.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(getWishListItems.fulfilled, (state, action) => {
         state.loading = false;
