@@ -27,7 +27,7 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
     deliveryDate.setDate(createdAt.getDate() + 5);
 
     const method = paymentMethod || "COD";
-    if (!["COD", "ONLINE"].includes(method)) {
+    if (!["COD", "ONLINE", "STRIPE"].includes(method)) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid payment method" });

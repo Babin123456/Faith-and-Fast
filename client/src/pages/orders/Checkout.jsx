@@ -2,6 +2,9 @@ import { getCartItems, deleteCartItem } from "@/store/add-to-cart/addToCart";
 import { userAddress } from "@/store/address-slice/addressSlice";
 import { getSingleDetail } from "@/store/auth-slice/user";
 import { createOrder, uploadPaymentScreenshot } from "@/store/order-slice/order";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import StripeCardForm from "./StripeCardForm";
 import { getPaymentSettings } from "@/store/extra-slice/paymentSettingsSlice";
 import { getProducts } from "@/store/product-slice/productSlice";
 import {
@@ -14,6 +17,15 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+
+// Load Stripe once at module scope using the publishable key from the
+// environment. Switch between test (pk_test_...) and live (pk_live_...) keys
+// via VITE_STRIPE_PUBLISHABLE_KEY — see PAYMENT_MODE_README.md. If the key is
+// missing, stripePromise is null and the card option degrades gracefully.
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey
+  ? loadStripe(stripePublishableKey)
+  : null;
 
 const CreateOrder = () => {
   const dispatch = useDispatch();
@@ -175,6 +187,14 @@ const CreateOrder = () => {
     }
 
     const method = orderData.paymentMethod || "COD";
+
+    // Card payments are handled entirely inside StripeCardForm (its own Pay
+    // button runs the Stripe flow), so the generic Place Order submit does
+    // nothing for the STRIPE method.
+    if (method === "STRIPE") {
+      toast.info("Use the \"Pay with Card\" button to complete your card payment.");
+      return;
+    }
 
     try {
       let payload = { ...orderData, paymentMethod: method };
@@ -384,6 +404,25 @@ const CreateOrder = () => {
                   Pay via UPI and upload screenshot
                 </p>
               </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setOrderData((prev) => ({ ...prev, paymentMethod: "STRIPE" }))
+                }
+                className={`text-left p-4 rounded-xl border-2 transition-all duration-200 ${
+                  orderData.paymentMethod === "STRIPE"
+                    ? "border-yellow-500 dark:border-red-500 bg-yellow-50 dark:bg-gray-700"
+                    : "border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700"
+                }`}
+              >
+                <p className="font-semibold text-gray-800 dark:text-gray-100">
+                  Pay with Card (Stripe)
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Debit / credit card via Stripe (test mode)
+                </p>
+              </button>
             </div>
 
             {orderData.paymentMethod === "ONLINE" && (
@@ -452,6 +491,27 @@ const CreateOrder = () => {
                 </div>
               </motion.div>
             )}
+
+            {orderData.paymentMethod === "STRIPE" &&
+              (stripePromise ? (
+                <Elements stripe={stripePromise}>
+                  <StripeCardForm
+                    orderData={orderData}
+                    onSuccess={() => {
+                      cartItems.forEach((item) => {
+                        dispatch(deleteCartItem(item._id));
+                      });
+                      dispatch(getCartItems());
+                      navigate("/order-success");
+                    }}
+                  />
+                </Elements>
+              ) : (
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl text-sm text-gray-600 dark:text-gray-400">
+                  Card payments are not configured. Please set
+                  VITE_STRIPE_PUBLISHABLE_KEY to enable Stripe checkout.
+                </div>
+              ))}
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-4">
