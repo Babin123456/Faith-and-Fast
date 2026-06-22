@@ -465,6 +465,15 @@ const AdminOrdersPage = () => {
                           >
                             {order.paymentStatus}
                           </span>
+                          {order.paymentMethod === "STRIPE" &&
+                            order.stripePaymentIntentId && (
+                              <div
+                                className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 break-all"
+                                title="Stripe transaction ID"
+                              >
+                                Txn: {order.stripePaymentIntentId}
+                              </div>
+                            )}
                         </td>
                         <td className="p-2 sm:p-3 lg:p-4 text-xs sm:text-sm text-gray-700 dark:text-gray-300 hidden md:table-cell">
                           {new Date(order.createdAt).toLocaleString("en-IN", {

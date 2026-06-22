@@ -45,6 +45,58 @@ export const uploadPaymentScreenshot = createAsyncThunk(
   }
 );
 
+// Stripe step 1: ask the server to create a PaymentIntent for the current cart.
+// The server computes the amount; we only receive a clientSecret to confirm the
+// card with on the browser.
+export const createStripeIntent = createAsyncThunk(
+  "order/createStripeIntent",
+  async (intentData, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axiosInstance.post(
+        "/api/payment/create-intent",
+        intentData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || "Failed to start card payment"
+      );
+    }
+  }
+);
+
+// Stripe step 2: after Stripe.js confirms the card succeeded, ask the server to
+// create the order. The server re-verifies the PaymentIntent with Stripe before
+// saving, so this only succeeds for a genuinely paid intent.
+export const confirmStripePayment = createAsyncThunk(
+  "order/confirmStripePayment",
+  async (confirmData, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axiosInstance.post(
+        "/api/payment/confirm",
+        confirmData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || "Failed to confirm card payment"
+      );
+    }
+  }
+);
+
 export const getSingleOrder = createAsyncThunk(
   "order/getSingleOrder",
   async (orderId, { rejectWithValue }) => {
