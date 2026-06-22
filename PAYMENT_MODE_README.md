@@ -33,6 +33,29 @@ The order is created **only after the payment has actually succeeded** — this 
 
 Admin order views show the payment method and the Stripe transaction id, so card payments are visible in the dashboard alongside COD and UPI orders.
 
+## India-specific Stripe requirements
+
+Stripe accounts based in India must comply with RBI export regulations for card
+payments. Stripe enforces two extra requirements on every card PaymentIntent —
+without them the payment is rejected with errors like *"export transactions
+require a description"* and *"export transactions require a customer name and
+address"*. The integration satisfies them as follows:
+
+| Requirement | Where it is set | Source of the data |
+| ----------- | --------------- | ------------------ |
+| **Description** on the PaymentIntent | `createPaymentIntent` (server) | Generated from the cart, e.g. `Faith-and-Fast order - 3 item(s)`. |
+| **Customer name + shipping address** on the PaymentIntent | `createPaymentIntent` (server) — `shipping` | Name from the signed-in user account; address from the selected delivery address. |
+| **Customer name + billing address** on the card | `StripeCardForm` (client) — `billing_details` | Name from the user account; address from the selected delivery address (used as the billing address). |
+| **Valid ISO country codes** | `toISOCountry()` on both client and server | Maps the stored country name (e.g. `India`) to its ISO 3166-1 alpha-2 code (`IN`). Values already in 2-letter form pass through; unrecognised values fall back to `IN` for this India-based store. |
+
+Because the shipping address is required for compliance, **card payments require a
+saved delivery address** — the create-intent endpoint returns `400` if none is
+provided. COD and Manual UPI are unaffected.
+
+> Note: the customer's name comes from their account (`user.name`), and the
+> billing/shipping address both come from the delivery address they pick at
+> checkout, since the address book is the only structured address in the app.
+
 ## Environment variables
 
 ### Server (`server/.env`)
