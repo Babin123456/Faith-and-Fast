@@ -82,12 +82,17 @@ export const createPaymentIntent = catchAsyncErrors(async (req, res) => {
 
     // Stripe expects the amount in the smallest currency unit (paise for INR,
     // cents for USD), hence the * 100.
+    // Extract and validate user ID
+    const userId = req.user?._id || req.user?.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User ID is missing in request" });
+    }
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountMajor * 100,
       currency,
       automatic_payment_methods: { enabled: true },
       metadata: {
-        userId: String(req.user?.id || req.user?._id || ""),
+        userId: String(userId),
       },
     });
 
