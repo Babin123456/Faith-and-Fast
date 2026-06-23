@@ -424,7 +424,8 @@ export const cancelOrder = catchAsyncErrors(async (req, res) => {
     order.orderStatus = "CANCELLED";
 
     for (const item of order.products) {
-      await updateCancelStock(item.product._id, item.quantity);
+      const prodId = item.product?._id || item.product;
+      await updateCancelStock(prodId, item.quantity);
     }
 
     order.orderHistory.push({
