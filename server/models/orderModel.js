@@ -96,25 +96,28 @@ const orderSchema = new mongoose.Schema(
       enum: ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"],
       default: "PENDING",
     },
-    orderHistory: [
-      {
-        status: {
-          type: String,
-          enum: ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"],
+    orderHistory: {
+      type: [
+        {
+          status: {
+            type: String,
+            enum: ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"],
+          },
+          changedAt: {
+            type: Date,
+            default: Date.now,
+          },
+          changedBy: {
+            type: String,
+          },
+          notes: {
+            type: String,
+            default: "",
+          },
         },
-        changedAt: {
-          type: Date,
-          default: Date.now,
-        },
-        changedBy: {
-          type: String,
-        },
-        notes: {
-          type: String,
-          default: "",
-        },
-      },
-    ],
+      ],
+      default: [],
+    },
     deliveryDate: { type: String, default: "To be delivered" },
     trackingId: {
       type: String,
