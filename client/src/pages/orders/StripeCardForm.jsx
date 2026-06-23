@@ -9,13 +9,42 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
+// Stripe needs ISO 3166-1 alpha-2 country codes. Addresses store the country as
+// a display name ("India" by default); map the common ones, pass through values
+// that are already 2-letter codes, and fall back to "IN" for this India-based
+// store. Mirrors the same helper on the server (stripeController.js).
+const COUNTRY_NAME_TO_ISO = {
+  india: "IN",
+  "united states": "US",
+  "united states of america": "US",
+  usa: "US",
+  "united kingdom": "GB",
+  uk: "GB",
+  canada: "CA",
+  australia: "AU",
+  "united arab emirates": "AE",
+  uae: "AE",
+  singapore: "SG",
+  germany: "DE",
+  france: "FR",
+  netherlands: "NL",
+  "new zealand": "NZ",
+};
+
+const toISOCountry = (country) => {
+  if (!country) return "IN";
+  const value = String(country).trim();
+  if (/^[A-Za-z]{2}$/.test(value)) return value.toUpperCase();
+  return COUNTRY_NAME_TO_ISO[value.toLowerCase()] || "IN";
+};
+
 // The card form lives in its own component because Stripe's useStripe /
 // useElements hooks only work for components rendered inside <Elements>. The
 // parent Checkout wraps this in <Elements>. On submit it runs the two-step
 // Stripe flow: create a PaymentIntent on the server, confirm the card in the
 // browser, then ask the server to create the order (the server re-verifies the
 // payment before saving).
-const StripeCardForm = ({ orderData, onSuccess }) => {
+const StripeCardForm = ({ orderData, onSuccess, customerName, billingAddress }) => {
   const stripe = useStripe();
   const elements = useElements();
   const dispatch = useDispatch();
@@ -44,6 +73,7 @@ const StripeCardForm = ({ orderData, onSuccess }) => {
         createStripeIntent({
           products: orderData.products,
           discountAmount: orderData.discountAmount || 0,
+          addressId: orderData.addressId,
         })
       ).unwrap();
 
@@ -53,11 +83,31 @@ const StripeCardForm = ({ orderData, onSuccess }) => {
         throw new Error("Could not start the card payment.");
       }
 
+      // India compliance: the customer's name + billing address must travel
+      // with the card. Built from the signed-in user's name and the selected
+      // delivery address (used as the billing address here).
+      const billingDetails = { name: customerName || undefined };
+      if (billingAddress) {
+        billingDetails.phone = billingAddress.mobile
+          ? String(billingAddress.mobile)
+          : undefined;
+        billingDetails.address = {
+          line1: billingAddress.address_line,
+          city: billingAddress.city,
+          state: billingAddress.state,
+          postal_code: billingAddress.pincode,
+          country: toISOCountry(billingAddress.country),
+        };
+      }
+
       // Step 2 — confirm the card in the browser with Stripe.js.
       const { error, paymentIntent } = await stripe.confirmCardPayment(
         clientSecret,
         {
-          payment_method: { card },
+          payment_method: {
+            card,
+            billing_details: billingDetails,
+          },
         }
       );
 
@@ -148,6 +198,15 @@ StripeCardForm.propTypes = {
     discountAmount: PropTypes.number,
   }).isRequired,
   onSuccess: PropTypes.func,
+  customerName: PropTypes.string,
+  billingAddress: PropTypes.shape({
+    address_line: PropTypes.string,
+    city: PropTypes.string,
+    state: PropTypes.string,
+    pincode: PropTypes.string,
+    country: PropTypes.string,
+    mobile: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  }),
 };
 
 export default StripeCardForm;
