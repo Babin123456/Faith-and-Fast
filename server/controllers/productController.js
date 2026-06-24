@@ -79,8 +79,12 @@ export const getProduct = catchAsyncErrors(async (req, res) => {
   try {
     let { page, limit, search } = req.query;
 
-    page = page ? parseInt(page, 10) : 1;
-    limit = limit ? parseInt(limit, 10) : 10;
+    // Clamp to a minimum of 1 so an invalid, zero, or negative page/limit can
+    // never produce a negative skip ((page - 1) * limit). `|| 1` handles the
+    // NaN case (e.g. ?page=abc); Math.max handles zero/negative. This mirrors
+    // the guard already used in searchProduct.
+    page = Math.max(1, parseInt(page, 10) || 1);
+    limit = Math.max(1, parseInt(limit, 10) || 1);
 
     const query = search ? { $text: { $search: search } } : {};
 
