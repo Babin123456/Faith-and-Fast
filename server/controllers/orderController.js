@@ -326,7 +326,11 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res) => {
       notes: notes || "",
     });
 
-    if (orderStatus === "SHIPPED") {
+    // Deduct stock at most once per order: only on the first transition into
+    // SHIPPED (stockDeducted === false). Without this guard, setting an order to
+    // SHIPPED again (e.g. PENDING → SHIPPED → DELIVERED → SHIPPED, or a duplicated
+    // request) deducted the same items' stock a second time.
+    if (orderStatus === "SHIPPED" && !order.stockDeducted) {
       // Two-phase inventory update to guarantee stock integrity.
       //
       // PHASE 1 — validate every line item BEFORE touching any stock. Load each
@@ -362,6 +366,20 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res) => {
         product.stock -= quantity;
         await product.save({ validateBeforeSave: false });
       }
+
+      // Mark the order so the same stock is never deducted again.
+      order.stockDeducted = true;
+    }
+
+    // Restore stock when an order whose stock was already deducted is cancelled.
+    // Previously the CANCELLED branch only changed the status, so inventory for a
+    // shipped-then-cancelled order leaked permanently. Guarded by stockDeducted
+    // so cancelling an order that never shipped does not inflate stock.
+    if (orderStatus === "CANCELLED" && order.stockDeducted) {
+      for (const item of order.products) {
+        await updateCancelStock(item.product, item.quantity);
+      }
+      order.stockDeducted = false;
     }
 
     await order.save();
@@ -423,8 +441,16 @@ export const cancelOrder = catchAsyncErrors(async (req, res) => {
 
     order.orderStatus = "CANCELLED";
 
-    for (const item of order.products) {
-      await updateCancelStock(item.product._id, item.quantity);
+    // Only restore stock if it was actually deducted (i.e. the order had been
+    // SHIPPED). cancelOrder only allows cancelling orders that are still PENDING
+    // (shipped/delivered are rejected above), and a PENDING order's stock was
+    // never deducted — so restoring unconditionally previously inflated inventory
+    // by the cancelled order's quantities.
+    if (order.stockDeducted) {
+      for (const item of order.products) {
+        await updateCancelStock(item.product._id, item.quantity);
+      }
+      order.stockDeducted = false;
     }
 
     order.orderHistory.push({
