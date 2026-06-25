@@ -2,6 +2,7 @@ import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import OrderModel from "../models/orderModel.js";
 import ProductModel from "../models/productModel.js";
 import UserModel from "../models/userModel.js";
+import DiscountModel from "../models/discountModel.js";
 import sendEmail from "../config/sendEmail.js";
 import generateReceiptHTML from "../utils/generateReceipt.js";
 import { uploadImage } from "../utils/cloudinary.js";
@@ -13,12 +14,13 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
       addressId,
       products,
       paymentMethod,
-      totalAmount,
       couponCode,
-      discountAmount,
       upiReference,
       paymentScreenshot,
     } = req.body;
+    // NOTE: totalAmount and discountAmount are intentionally NOT read from the
+    // request body — they are recomputed server-side below from real DB prices
+    // and a re-validated coupon, so a tampered client-supplied total is ignored.
 
     let { deliveryDate } = req.body;
 
@@ -39,13 +41,87 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
       });
     }
 
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Order must contain at least one product",
+      });
+    }
+
+    // Rebuild every line item from the database: trust the client only for which
+    // product and how many, never for the price. Each line's unit price and line
+    // total come from the DB, and the items total is summed from them.
+    const orderItems = [];
+    let itemsTotal = 0;
+    for (const item of products) {
+      const product = await ProductModel.findById(item.product);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: `Product ${item.product} not found`,
+        });
+      }
+
+      const quantity = Number(item.quantity);
+      if (!Number.isInteger(quantity) || quantity < 1) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid quantity for "${product.name}"`,
+        });
+      }
+
+      const lineTotal = product.price * quantity;
+      itemsTotal += lineTotal;
+
+      orderItems.push({
+        product: product._id,
+        quantity,
+        price: product.price, // DB price snapshot — never the client value
+        totalPrice: lineTotal,
+        images:
+          Array.isArray(item.images) && item.images.length > 0
+            ? item.images
+            : product.images,
+        selectedColor: item.selectedColor || "",
+        selectedSize: item.selectedSize || "",
+      });
+    }
+
+    // Re-validate the coupon and recompute the discount server-side, mirroring
+    // applyDiscount's formula. The coupon's usage (usedBy) is consumed by the
+    // applyDiscount endpoint at checkout — here we only recompute the monetary
+    // amount (so a tampered discountAmount cannot be trusted) and never re-consume
+    // the coupon. An invalid, expired, or inactive coupon simply yields no discount.
+    let discountAmount = 0;
+    let appliedCouponCode = "";
+    if (couponCode && String(couponCode).trim()) {
+      const discount = await DiscountModel.findOne({
+        name: String(couponCode).trim(),
+        startDate: { $lte: new Date() },
+        endDate: { $gte: new Date() },
+        isActive: true,
+      });
+
+      if (discount) {
+        let computed =
+          discount.discountType === "FIXED"
+            ? discount.discountValue
+            : (itemsTotal * discount.discountValue) / 100;
+        computed = Math.min(computed, itemsTotal);
+        discountAmount = Math.max(0, computed);
+        appliedCouponCode = discount.name;
+      }
+    }
+
+    const totalAmount = Math.max(0, itemsTotal - discountAmount);
+
     const newOrder = new OrderModel({
       user: userId,
       address: addressId,
-      products,
+      products: orderItems,
       totalAmount,
-      couponCode: couponCode || "",
-      discountAmount: discountAmount || 0,
+      couponCode: appliedCouponCode,
+      discountAmount,
       paymentMethod: method,
       upiReference: method === "ONLINE" ? upiReference || "" : "",
       paymentScreenshot:
@@ -326,7 +402,11 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res) => {
       notes: notes || "",
     });
 
-    if (orderStatus === "SHIPPED") {
+    // Deduct stock at most once per order: only on the first transition into
+    // SHIPPED (stockDeducted === false). Without this guard, setting an order to
+    // SHIPPED again (e.g. PENDING → SHIPPED → DELIVERED → SHIPPED, or a duplicated
+    // request) deducted the same items' stock a second time.
+    if (orderStatus === "SHIPPED" && !order.stockDeducted) {
       // Two-phase inventory update to guarantee stock integrity.
       //
       // PHASE 1 — validate every line item BEFORE touching any stock. Load each
@@ -362,6 +442,20 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res) => {
         product.stock -= quantity;
         await product.save({ validateBeforeSave: false });
       }
+
+      // Mark the order so the same stock is never deducted again.
+      order.stockDeducted = true;
+    }
+
+    // Restore stock when an order whose stock was already deducted is cancelled.
+    // Previously the CANCELLED branch only changed the status, so inventory for a
+    // shipped-then-cancelled order leaked permanently. Guarded by stockDeducted
+    // so cancelling an order that never shipped does not inflate stock.
+    if (orderStatus === "CANCELLED" && order.stockDeducted) {
+      for (const item of order.products) {
+        await updateCancelStock(item.product, item.quantity);
+      }
+      order.stockDeducted = false;
     }
 
     await order.save();
