@@ -497,6 +497,10 @@ const CreateOrder = () => {
                 <Elements stripe={stripePromise}>
                   <StripeCardForm
                     orderData={orderData}
+                    customerName={user?.name}
+                    billingAddress={address.find(
+                      (a) => a._id === orderData.addressId
+                    )}
                     onSuccess={() => {
                       cartItems.forEach((item) => {
                         dispatch(deleteCartItem(item._id));
