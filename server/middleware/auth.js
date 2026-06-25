@@ -20,7 +20,7 @@ const auth = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.log(error);
+    console.warn("JWT verification failed:", error.name);
     if (error.name === "JsonWebTokenError") {
       return res
         .status(400)

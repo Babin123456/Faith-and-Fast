@@ -517,16 +517,9 @@ export const cancelOrder = catchAsyncErrors(async (req, res) => {
 
     order.orderStatus = "CANCELLED";
 
-    // Only restore stock if it was actually deducted (i.e. the order had been
-    // SHIPPED). cancelOrder only allows cancelling orders that are still PENDING
-    // (shipped/delivered are rejected above), and a PENDING order's stock was
-    // never deducted — so restoring unconditionally previously inflated inventory
-    // by the cancelled order's quantities.
-    if (order.stockDeducted) {
-      for (const item of order.products) {
-        await updateCancelStock(item.product._id, item.quantity);
-      }
-      order.stockDeducted = false;
+    for (const item of order.products) {
+      const prodId = item.product?._id || item.product;
+      await updateCancelStock(prodId, item.quantity);
     }
 
     order.orderHistory.push({

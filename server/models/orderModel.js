@@ -96,33 +96,28 @@ const orderSchema = new mongoose.Schema(
       enum: ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"],
       default: "PENDING",
     },
-    // True once this order's line items have been deducted from product stock
-    // (on the first transition into SHIPPED). Guards against deducting the same
-    // order's stock twice, and drives restore-on-cancel. Defaults to false so
-    // newly created orders start "not yet deducted".
-    stockDeducted: {
-      type: Boolean,
-      default: false,
+    orderHistory: {
+      type: [
+        {
+          status: {
+            type: String,
+            enum: ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"],
+          },
+          changedAt: {
+            type: Date,
+            default: Date.now,
+          },
+          changedBy: {
+            type: String,
+          },
+          notes: {
+            type: String,
+            default: "",
+          },
+        },
+      ],
+      default: [],
     },
-    orderHistory: [
-      {
-        status: {
-          type: String,
-          enum: ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"],
-        },
-        changedAt: {
-          type: Date,
-          default: Date.now,
-        },
-        changedBy: {
-          type: String,
-        },
-        notes: {
-          type: String,
-          default: "",
-        },
-      },
-    ],
     deliveryDate: { type: String, default: "To be delivered" },
     trackingId: {
       type: String,

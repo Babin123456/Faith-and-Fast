@@ -344,7 +344,7 @@ export const forgotPassword = catchAsyncErrors(async (req, res) => {
 
     const update = await UserModel.findByIdAndUpdate(user._id, {
       forgot_password_otp: otp,
-      forgot_password_expiry: new Date(expireTime).toISOString(),
+      forgot_password_expiry: expireTime,
     });
 
     if (!update) {
@@ -409,9 +409,9 @@ export const verifyOtp = catchAsyncErrors(async (req, res) => {
       });
     }
 
-    const currentTime = new Date().toISOString();
-
-    if (user.forgot_password_expiry < currentTime) {
+    const now = new Date();
+    const expiry = new Date(user.forgot_password_expiry);
+    if (expiry < now) {
       return res.status(400).json({
         message: "Otp has expired. Please req a new one.",
         error: true,
