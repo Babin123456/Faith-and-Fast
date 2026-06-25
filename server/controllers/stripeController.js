@@ -3,6 +3,7 @@ import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import OrderModel from "../models/orderModel.js";
 import ProductModel from "../models/productModel.js";
 import UserModel from "../models/userModel.js";
+import AddressModel from "../models/addressModel.js";
 import sendEmail from "../config/sendEmail.js";
 import generateReceiptHTML from "../utils/generateReceipt.js";
 
@@ -20,6 +21,37 @@ const getStripe = () => {
     stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY);
   }
   return stripeClient;
+};
+
+// Stripe requires ISO 3166-1 alpha-2 country codes (e.g. "IN"), but addresses
+// in this app store the country as a display name ("India" by default). This
+// maps the common names we expect to their ISO codes. If a value is already a
+// 2-letter code it is used as-is; anything unrecognised falls back to "IN",
+// since this is an India-based store (INR pricing, 10-digit mobiles, pincodes,
+// and an "India" country default). India compliance specifically needs "IN".
+const COUNTRY_NAME_TO_ISO = {
+  india: "IN",
+  "united states": "US",
+  "united states of america": "US",
+  usa: "US",
+  "united kingdom": "GB",
+  uk: "GB",
+  canada: "CA",
+  australia: "AU",
+  "united arab emirates": "AE",
+  uae: "AE",
+  singapore: "SG",
+  germany: "DE",
+  france: "FR",
+  netherlands: "NL",
+  "new zealand": "NZ",
+};
+
+const toISOCountry = (country) => {
+  if (!country) return "IN";
+  const value = String(country).trim();
+  if (/^[A-Za-z]{2}$/.test(value)) return value.toUpperCase();
+  return COUNTRY_NAME_TO_ISO[value.toLowerCase()] || "IN";
 };
 
 // Recompute the order total on the server from the live product prices so the
@@ -69,7 +101,7 @@ export const createPaymentIntent = catchAsyncErrors(async (req, res) => {
   }
 
   try {
-    const { products, discountAmount } = req.body;
+    const { products, discountAmount, addressId } = req.body;
 
     const amountMajor = await computeServerAmount(products, discountAmount);
     if (amountMajor <= 0) {
@@ -78,7 +110,44 @@ export const createPaymentIntent = catchAsyncErrors(async (req, res) => {
         .json({ success: false, message: "Order amount must be greater than zero" });
     }
 
+    // India Stripe export compliance requires a shipping name + address on the
+    // PaymentIntent, so the delivery address is mandatory for card payments.
+    if (!addressId) {
+      return res.status(400).json({
+        success: false,
+        message: "A delivery address is required for card payments",
+      });
+    }
+
+    const address = await AddressModel.findById(addressId);
+    if (!address) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Delivery address not found" });
+    }
+
     const currency = process.env.STRIPE_CURRENCY || "inr";
+    const itemCount = products.reduce(
+      (sum, item) => sum + (Number(item?.quantity) || 0),
+      0
+    );
+
+    // India regulations require export card transactions to carry a description
+    // and a customer name + address. The description is set here and the
+    // customer's name + shipping address are attached below; the billing
+    // address travels with the card from the client (billing_details).
+    const description = `Faith-and-Fast order - ${itemCount} item(s)`;
+    const shipping = {
+      name: req.user?.name || "Customer",
+      phone: address.mobile ? String(address.mobile) : undefined,
+      address: {
+        line1: address.address_line,
+        city: address.city,
+        state: address.state,
+        postal_code: address.pincode,
+        country: toISOCountry(address.country),
+      },
+    };
 
     // Stripe expects the amount in the smallest currency unit (paise for INR,
     // cents for USD), hence the * 100.
@@ -90,6 +159,8 @@ export const createPaymentIntent = catchAsyncErrors(async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountMajor * 100,
       currency,
+      description,
+      shipping,
       automatic_payment_methods: { enabled: true },
       metadata: {
         userId: String(userId),

@@ -39,6 +39,16 @@ export const createDiscount = async (req, res) => {
       });
     }
 
+    // A percentage discount cannot exceed 100. This mirrors the same guard
+    // already enforced in updateDiscount, so create and update stay consistent.
+    // FIXED discounts legitimately have no upper cap.
+    if (discountType === "PERCENTAGE" && Number(discountValue) > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "A percentage discount cannot exceed 100",
+      });
+    }
+
     const newDiscount = new DiscountModel({
       name,
       discountType,
