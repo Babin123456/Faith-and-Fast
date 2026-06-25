@@ -475,6 +475,23 @@ export const postProductReview = catchAsyncErrors(async (req, res) => {
     const { productId } = req.params;
     const { rating, comment, name } = req.body;
 
+    // Validate the rating is a number within the allowed 1–5 range. Previously
+    // the value was pushed straight in: an out-of-range value relied on the
+    // schema's min/max to throw (surfacing as a generic 500), and a non-numeric
+    // value cast to NaN — both corrupting the recomputed average.
+    const numericRating = Number(rating);
+    if (
+      !Number.isFinite(numericRating) ||
+      numericRating < 1 ||
+      numericRating > 5
+    ) {
+      return res.status(400).json({
+        message: "Rating must be a number between 1 and 5",
+        error: true,
+        success: false,
+      });
+    }
+
     const product = await ProductModel.findById(productId);
 
     if (!product) {
@@ -482,10 +499,24 @@ export const postProductReview = catchAsyncErrors(async (req, res) => {
       return;
     }
 
+    // One review per user. Previously a user could post unlimited reviews,
+    // letting a single person dominate the product's average rating. The UI
+    // already lets a user delete their review, so revising means delete + re-add.
+    const alreadyReviewed = product.reviews.some(
+      (r) => r.user && r.user.toString() === req.user._id.toString()
+    );
+    if (alreadyReviewed) {
+      return res.status(400).json({
+        message: "You have already reviewed this product",
+        error: true,
+        success: false,
+      });
+    }
+
     const review = {
       user: req.user._id,
       name,
-      rating,
+      rating: numericRating,
       comment,
       createdAt: new Date().toISOString(),
     };
@@ -494,7 +525,7 @@ export const postProductReview = catchAsyncErrors(async (req, res) => {
     product.numOfReviews = product.reviews.length;
 
     product.ratings =
-      product.reviews.reduce((acc, review) => acc + review.rating, 0) /
+      product.reviews.reduce((acc, r) => acc + r.rating, 0) /
       product.reviews.length;
 
     await product.save();
