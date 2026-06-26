@@ -251,6 +251,10 @@ const ProductDetails = ({ products }) => {
       toast.error("Error: Item not found!");
       return;
     }
+    if (item.stock <= 0) {
+      toast.error("Error: This item is currently out of stock!");
+      return;
+    }
     dispatch(addToCart({ productId: item._id, selectedColor, selectedSize }));
     toast.success(`"${item.name}" added to cart!`);
   };
@@ -261,6 +265,10 @@ const ProductDetails = ({ products }) => {
   const handleBuyNow = async (item) => {
     if (!item) {
       toast.error("Error: Item not found!");
+      return;
+    }
+    if (item.stock <= 0) {
+      toast.error("Error: This item is currently out of stock!");
       return;
     }
     try {
