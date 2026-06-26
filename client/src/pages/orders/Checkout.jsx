@@ -38,6 +38,11 @@ const CreateOrder = () => {
     (state) => state.paymentSettings
   );
 
+  // Local state parameters managing user UPI payment options.
+  // upiReference tracks transaction IDs submitted by buyers.
+  // screenshotFile handles raw file input for verification images.
+  // screenshotPreview holds temporary object URLs for client side UI review.
+  // uploading controls active state spinner overlays during media transfers.
   const [upiReference, setUpiReference] = useState("");
   const [screenshotFile, setScreenshotFile] = useState(null);
   const [screenshotPreview, setScreenshotPreview] = useState("");
