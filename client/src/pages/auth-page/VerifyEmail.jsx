@@ -16,6 +16,8 @@ const VerifyEmail = () => {
   );
   const { user } = useSelector((state) => state.auth);
   const [otp, setOtp] = useState("");
+  const [timer, setTimer] = useState(30);
+  const [canResend, setCanResend] = useState(false);
 
   const redirect = location.search ? location.search.split("=")[1] : "/";
 
@@ -25,16 +27,30 @@ const VerifyEmail = () => {
     }
   }, [verifyEmail, navigate, redirect]);
 
+  useEffect(() => {
+    let interval = null;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else {
+      setCanResend(true);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
   const handleVerify = (e) => {
     e.preventDefault();
-    if (otp.length !== 6) return alert("OTP must be 6 digits");
+    if (otp.length !== 6) return toast.error("OTP must be 6 digits");
 
     dispatch(verifyEmailOtp({ email: user?.email, otp }));
   };
 
   const handleResendOtp = () => {
-    if (user?.email) {
+    if (user?.email && canResend) {
       dispatch(resendOtp(user.email));
+      setTimer(30);
+      setCanResend(false);
     }
   };
 
@@ -83,11 +99,15 @@ const VerifyEmail = () => {
 
         <motion.button
           onClick={handleResendOtp}
-          className="mt-4 text-yellow-500 dark:text-red-600 font-bold hover:underline"
-          whileHover={{ scale: 1.05 }}
-          disabled={loading}
+          className={`mt-4 font-bold ${
+            canResend
+              ? "text-yellow-500 dark:text-red-600 hover:underline cursor-pointer"
+              : "text-gray-400 dark:text-gray-600 cursor-not-allowed"
+          }`}
+          whileHover={canResend ? { scale: 1.05 } : {}}
+          disabled={loading || !canResend}
         >
-          Resend OTP
+          {canResend ? "Resend OTP" : `Resend OTP in ${timer}s`}
         </motion.button>
       </motion.div>
     </motion.div>
