@@ -128,6 +128,10 @@ To test admin features locally, you need an account with the `ADMIN` role.
 
 ### Method 1: Seeding (Recommended)
 We provide a script to create a default admin account in your local database.
+
+> [!WARNING]
+> Ensure you have configured the `MONGODB_URL` variable in `server/.env` before running the seeding script, otherwise database connection attempts will time out.
+
 ```bash
 cd server
 npm run seed-admin
