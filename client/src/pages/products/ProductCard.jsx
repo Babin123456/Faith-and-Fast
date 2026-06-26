@@ -12,13 +12,18 @@ const ProductCard = ({ product }) => {
       whileTap={{ scale: 0.95 }}
       className="border rounded-lg overflow-hidden shadow-md bg-white dark:bg-gray-800 hover:shadow-xl transition duration-300"
     >
-      <Link to={`/product/${product._id}`} className="block">
+      <Link to={`/product/${product._id}`} className="block relative">
         <img
           src={imageUrl}
           alt={product.name || "Product Image"}
           className="w-full h-40 sm:h-64 object-cover"
           onError={(e) => (e.target.src = "/fallback-image.jpg")}
         />
+        {product.stock <= 0 && (
+          <span className="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider">
+            Out of Stock
+          </span>
+        )}
       </Link>
       <div className="p-4">
         <h3 className="text-lg font-semibold">
@@ -46,6 +51,7 @@ ProductCard.propTypes = {
   product: PropTypes.shape({
     _id: PropTypes.string.isRequired,
     name: PropTypes.string,
+    stock: PropTypes.number,
     price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     discount: PropTypes.number,
     images: PropTypes.arrayOf(
