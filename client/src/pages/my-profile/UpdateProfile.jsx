@@ -93,6 +93,12 @@ const UpdateProfile = () => {
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
     if (formData.mobile.length !== 10) {
       toast.error("mobile number must be 10 digits");
       return;
