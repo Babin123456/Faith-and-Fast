@@ -184,6 +184,14 @@ const CreateOrder = () => {
           toast.error("Please upload your payment screenshot.");
           return;
         }
+        const trimmedUpiRef = upiReference.trim();
+        if (trimmedUpiRef !== "") {
+          const upiRefRegex = /^\d{12}$/;
+          if (!upiRefRegex.test(trimmedUpiRef)) {
+            toast.error("UPI Transaction ID must be exactly 12 digits.");
+            return;
+          }
+        }
         setUploading(true);
         const screenshot = await dispatch(
           uploadPaymentScreenshot(screenshotFile)
