@@ -10,7 +10,7 @@ import {
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import { Country, State, City } from "country-state-city";
-import MetaData from "../extras/MetaData";
+import ConfirmationModal from "../extras/ConfirmationModel";
 
 const SavedAddress = () => {
   const dispatch = useDispatch();
@@ -19,6 +19,8 @@ const SavedAddress = () => {
   const [editData, setEditData] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
   const [formData, setFormData] = useState({
     address_line: "",
     city: "",
@@ -117,20 +119,27 @@ const SavedAddress = () => {
       .catch((err) => toast.error(err.message || "Failed to update address"));
   };
 
-  const handleDelete = (id) => {
-    if (!id) {
-      toast.error("Address ID is missing. Cannot delete.");
-      return;
-    }
+  const openDeleteConfirm = (id) => {
+    setDeleteId(id);
+    setIsDeleteOpen(true);
+  };
 
-    dispatch(deleteUserAddress(id))
+  const handleDeleteConfirm = () => {
+    if (!deleteId) return;
+
+    dispatch(deleteUserAddress(deleteId))
       .unwrap()
       .then(() => {
         toast.success("Address deleted successfully!");
-        // Refresh the address list from state instead of reloading the page.
         dispatch(userAddress());
+        setIsDeleteOpen(false);
+        setDeleteId(null);
       })
-      .catch((err) => toast.error(err.message || "Failed to delete address"));
+      .catch((err) => {
+        toast.error(err.message || "Failed to delete address");
+        setIsDeleteOpen(false);
+        setDeleteId(null);
+      });
   };
 
   const handleAddAddress = (e) => {
@@ -220,7 +229,7 @@ const SavedAddress = () => {
                     <Edit2 size={16} />
                   </motion.button>
                   <motion.button
-                    onClick={() => handleDelete(item._id)}
+                    onClick={() => openDeleteConfirm(item._id)}
                     className="p-2 rounded-lg bg-black dark:bg-white text-white  dark:text-black transition-colors"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -235,6 +244,14 @@ const SavedAddress = () => {
           )}
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Address"
+        message="Are you sure you want to delete this saved address? This action cannot be undone."
+      />
 
       <AnimatePresence>
         {isAdding && (
