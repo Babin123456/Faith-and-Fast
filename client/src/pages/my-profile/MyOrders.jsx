@@ -351,9 +351,36 @@ const MyOrders = () => {
               {typeof error === "string" ? error : "No Orders Available"}
             </Alert>
           ) : filteredProducts.length === 0 ? (
-            <Alert severity="info" className="text-sm sm:text-base">
-              No orders found
-            </Alert>
+            <div className="flex flex-col items-center justify-center py-16 px-4 bg-white dark:bg-gray-800 rounded-lg shadow-md text-center">
+              <svg
+                className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                ></path>
+              </svg>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">
+                No Orders Placed Yet
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-sm">
+                Looks like you haven't placed any orders yet. Explore our awesome collection of clothing and accessories today!
+              </p>
+              <Link to="/products">
+                <Button
+                  variant="contained"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg transition-all"
+                >
+                  Start Shopping
+                </Button>
+              </Link>
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-4">
               <AnimatePresence>
