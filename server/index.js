@@ -7,8 +7,10 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import morgan from "morgan";
 import connectDB from "./config/connectDB.js";
+import validateEnv from "./config/validateEnv.js";
 import errorMiddleware from "./middleware/error.js";
 dotenv.config();
+validateEnv();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
