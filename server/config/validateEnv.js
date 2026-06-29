@@ -7,7 +7,8 @@ const REQUIRED_ENV_VARS = [
   "CLOUDINARY_API_KEY",
   "CLOUDINARY_API_SECRET",
   "BREVO_API_KEY",
-  "SENDER_EMAIL",
+  "BREVO_SENDER_EMAIL",
+  "BREVO_SENDER_NAME",
   "FRONTEND_URL",
 ];
 
@@ -19,7 +20,7 @@ export default function validateEnv() {
   if (missing.length > 0) {
     console.error("\n[FATAL] Missing required environment variables:\n");
     missing.forEach((key) => console.error(`  - ${key}`));
-    console.error("\nCheck your .env file against server/.env.example\n");
+    console.error("\nCheck your .env file against server/.env\n");
     process.exit(1);
   }
 }
