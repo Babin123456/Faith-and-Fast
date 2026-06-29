@@ -42,6 +42,7 @@ import FAQPage from "./pages/extras/FAQPage";
 import PrivacyPolicy from "./pages/extras/PrivacyPolicy";
 import TermsAndServices from "./pages/extras/TermsAndServices";
 import Sitemap from "./pages/extras/Sitemap";
+import ErrorBoundary from "./pages/components/ErrorBoundary";
 
 const App = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -66,6 +67,7 @@ const App = () => {
       <Header />
       <WhatsAppButton />
 
+      <ErrorBoundary>
       <Routes>
         {/* User routes */}
         <Route path="/" element={<Home />} />
@@ -189,6 +191,7 @@ const App = () => {
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </ErrorBoundary>
 
       <ScrollToTop />
       <Footer />
