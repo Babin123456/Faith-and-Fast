@@ -213,7 +213,6 @@ export const loginUser = catchAsyncErrors(async (req, res) => {
   }
 
   const user = await UserModel.findOne({ email }).select("+password");
-  console.log("User Found:", user);
 
   if (!user) {
     return res.status(400).json({
