@@ -17,6 +17,10 @@ const ProductCard = ({ product }) => {
           src={imageUrl}
           alt={product.name || "Product Image"}
           className="w-full h-40 sm:h-64 object-cover"
+          width={400}
+          height={256}
+          loading="lazy"
+          decoding="async"
           onError={(e) => (e.target.src = "/fallback-image.jpg")}
         />
       </Link>
