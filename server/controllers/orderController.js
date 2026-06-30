@@ -436,11 +436,37 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res) => {
         stockUpdates.push({ product, quantity: item.quantity });
       }
 
-      // PHASE 2 — all items validated; apply every deduction. Each product has
-      // already been confirmed to have sufficient stock above.
+      // PHASE 2 — apply every deduction atomically and conditionally. A
+      // { _id, stock: { $gte: quantity } } filter combined with $inc makes the
+      // check-and-decrement a single atomic database operation, so two concurrent
+      // "mark SHIPPED" requests sharing a product cannot both pass and oversell —
+      // stock can never be driven negative. PHASE 1 validated availability; this
+      // closes the check-then-act race between PHASE 1 and here. If a concurrent
+      // request consumed the stock in that window the conditional update matches
+      // nothing, so we roll back any deductions already applied in this loop and
+      // abort, leaving inventory exactly as it was ("nothing changed").
+      const appliedDeductions = [];
       for (const { product, quantity } of stockUpdates) {
-        product.stock -= quantity;
-        await product.save({ validateBeforeSave: false });
+        const result = await ProductModel.updateOne(
+          { _id: product._id, stock: { $gte: quantity } },
+          { $inc: { stock: -quantity } }
+        );
+
+        if (result.modifiedCount === 0) {
+          for (const done of appliedDeductions) {
+            await ProductModel.updateOne(
+              { _id: done.product._id },
+              { $inc: { stock: done.quantity } }
+            );
+          }
+
+          return res.status(409).json({
+            success: false,
+            message: `Insufficient stock for "${product.name}" due to a concurrent update. No stock was changed.`,
+          });
+        }
+
+        appliedDeductions.push({ product, quantity });
       }
 
       // Mark the order so the same stock is never deducted again.
