@@ -112,7 +112,7 @@ const ProductReviews = () => {
                       </span>
                     </div>
                     <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">
-                      Nice 👍 better than expectations 🌹 thank you Flipkart
+                      Nice 👍 better than expectations 🌹 thank you Faith & Fast
                     </p>
                     <div className="flex flex-wrap items-center gap-2 text-gray-500 dark:text-gray-400 text-xs">
                       <span>Puneeth Puni</span>
