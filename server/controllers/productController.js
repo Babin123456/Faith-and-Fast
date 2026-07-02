@@ -56,6 +56,7 @@ export const createProduct = catchAsyncErrors(async (req, res, next) => {
       stock: stock || 0,
       discount: discount || 0,
       images: uploadedImages,
+      vendor: req.user?._id || null,
     });
 
     const savedProduct = await product.save();

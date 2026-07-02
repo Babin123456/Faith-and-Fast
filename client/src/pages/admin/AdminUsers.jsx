@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { getAllUsers } from "@/store/auth-slice/user";
-import { Spinner } from "../extras/Spinner.jsx";
+import { AdminSpinner as Spinner } from "../extras/AdminSpinner.jsx";
 import { ArrowLeft, ArrowLeftCircle, ArrowRightCircle } from "lucide-react";
 import MetaData from "../extras/MetaData.jsx";
 import { toast } from "react-toastify";

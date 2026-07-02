@@ -84,7 +84,7 @@ const AdminProducts = () => {
         transition={{ duration: 0.5 }}
         className="text-3xl font-bold text-yellow-500 dark:text-red-500 mb-6"
       >
-        Admin - Product List
+        Admin & Vendor - Product List
       </motion.h2>
 
       <button
