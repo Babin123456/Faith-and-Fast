@@ -4,7 +4,7 @@ import { toggleDarkMode } from "@/store/extra-slice/darkModeSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sun, Moon } from "lucide-react";
 
-const DarkModeToggle = () => {
+const ThemeToggle = () => {
   const dispatch = useDispatch();
   const darkMode = useSelector((state) => state.darkMode.darkMode);
 
@@ -59,4 +59,4 @@ const DarkModeToggle = () => {
   );
 };
 
-export default DarkModeToggle;
+export default ThemeToggle;

@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "@/store/auth-slice/user";
 import { toast } from "react-toastify";
-import DarkModeToggle from "../extras/DarkModeToggle";
+import ThemeToggle from "../extras/ThemeToggle";
 import logoLight from "../../assets/logo-light.png";
 import logo from "../../assets/logoLight.png";
 import PropTypes from "prop-types";
@@ -128,7 +128,7 @@ export default function Header() {
         </a>
 
         <div onClick={toggleDarkMode} className="cursor-pointer text-white">
-          <DarkModeToggle />
+          <ThemeToggle />
         </div>
 
         <div className="relative">

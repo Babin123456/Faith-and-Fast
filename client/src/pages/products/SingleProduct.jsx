@@ -22,6 +22,7 @@ import { toast } from "react-toastify";
 import PropTypes from "prop-types";
 import { addToCart } from "@/store/add-to-cart/addToCart";
 import { addToWishList } from "@/store/add-to-wishList/addToWishList";
+import { getOptimizedImageUrl } from "../../utils/imageOptimizer";
 
 const ProductDetails = ({ products }) => {
   const { productId } = useParams();
@@ -330,7 +331,7 @@ const ProductDetails = ({ products }) => {
                   className="rounded-lg overflow-hidden shadow-2xl"
                 >
                   <ImageSlider
-                    images={product?.images?.map((img) => img.url)}
+                    images={product?.images?.map((img) => getOptimizedImageUrl(img.url, 800))}
                   />
                 </motion.div>
                 <div className="space-y-6">
