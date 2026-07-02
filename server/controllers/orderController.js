@@ -291,6 +291,20 @@ export const getSingleOrder = catchAsyncErrors(async (req, res) => {
       });
     }
 
+    // Only the order's owner or an admin may view it. Without this check any
+    // authenticated user could read another customer's order (name, email,
+    // address, phone, purchased items) by knowing/guessing its id. Mirrors the
+    // ownership guard already used by cancelOrder in this file.
+    if (
+      order.user._id.toString() !== req.user._id.toString() &&
+      req.user.role !== "ADMIN"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized to view this order",
+      });
+    }
+
     res.status(200).json({
       success: true,
       order,
