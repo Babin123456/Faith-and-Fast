@@ -7,6 +7,8 @@ import { getSingleDetail, loginUser } from "@/store/auth-slice/user";
 import { toast } from "react-toastify";
 import MetaData from "../extras/MetaData";
 
+import { validateLogin } from "../../utils/validationSchemas";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,6 +26,11 @@ const Login = () => {
 
   const loginSubmit = (e) => {
     e.preventDefault();
+    const { errors, isValid } = validateLogin(email, password);
+    if (!isValid) {
+      Object.values(errors).forEach((err) => toast.error(err));
+      return;
+    }
     dispatch(loginUser({ email, password }));
   };
 

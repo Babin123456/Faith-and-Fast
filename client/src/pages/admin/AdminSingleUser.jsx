@@ -10,7 +10,7 @@ import {
   updateUserRole,
   updateUserStatus,
 } from "@/store/auth-slice/user";
-import Spinner from "../extras/Spinner";
+import LoadingSpinner from "../extras/LoadingSpinner";
 import ConfirmationModal from "../extras/ConfirmationModel";
 import { toast } from "react-toastify";
 import { ArrowLeft, Delete, Edit } from "lucide-react";
@@ -78,7 +78,7 @@ const SingleUser = () => {
   if (loading)
     return (
       <div className="flex justify-center items-center h-64">
-        <Spinner size="lg" className="text-yellow-600 dark:text-red-600" />
+        <LoadingSpinner size="lg" className="text-yellow-600 dark:text-red-600" />
       </div>
     );
   if (error) return <div className="text-red-500 p-4">{error}</div>;
