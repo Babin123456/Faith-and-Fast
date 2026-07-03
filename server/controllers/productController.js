@@ -433,7 +433,13 @@ export const getProductByFilter = catchAsyncErrors(async (req, res) => {
       query.discount = { $gte: parseInt(discount, 10) };
     }
 
-    query.price = { $gte: parseInt(minPrice, 10), $lte: parseInt(maxPrice, 10) };
+    const lo = Number.parseInt(minPrice, 10);
+    const hi = Number.parseInt(maxPrice, 10);
+    if (Number.isFinite(lo) || Number.isFinite(hi)) {
+      query.price = {};
+      if (Number.isFinite(lo)) query.price.$gte = lo;
+      if (Number.isFinite(hi)) query.price.$lte = hi;
+    }
 
     let sortQuery = {};
     if (sortBy === "price-low-high") {
