@@ -15,7 +15,8 @@ const uploadImageController = async (req, res) => {
       });
     }
 
-    const uploadResult = await uploadImage(file);
+    const uploadOptions = getCloudinaryUploadOptions();
+    const uploadResult = await uploadImage(file, uploadOptions);
 
     return res.json({
       message: "Image uploaded successfully",
