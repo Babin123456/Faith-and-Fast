@@ -74,7 +74,7 @@ import paymentSettingsRouter from "./route/paymentSettingsRoute.js";
 import productRouter from "./route/productRoute.js";
 import supportRouter from "./route/supportRoute.js";
 import userRouter from "./route/userRoute.js";
-import wishListRouter from "./route/wishListRoute.js";
+import wishListRouter from "./route/wishlistRoute.js";
 import reviewRouter from "./route/reviewRoute.js";
 
 app.use("/api/address", addressRouter);
