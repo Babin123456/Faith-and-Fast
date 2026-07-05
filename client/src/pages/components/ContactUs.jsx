@@ -11,6 +11,8 @@ import {
 import { contactConfig } from "../../config/contact";
 import { validateContactForm } from "../../utils/contactValidation";
 
+import { contactConfig } from "../../config/contact";
+
 const ContactUs = () => {
   const [contactData] = useState(contactConfig);
   const dispatch = useDispatch();
