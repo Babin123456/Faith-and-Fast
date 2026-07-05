@@ -122,8 +122,13 @@ const ProductDetails = ({ products }) => {
 
   useEffect(() => {
     if (product && product._id) {
-      let viewedProducts =
-        JSON.parse(localStorage.getItem("recentlyViewed")) || [];
+      let viewedProducts = [];
+      try {
+        const raw = JSON.parse(localStorage.getItem("recentlyViewed"));
+        if (Array.isArray(raw)) viewedProducts = raw;
+      } catch {
+        /* ignore corrupt or non-array value */
+      }
 
       viewedProducts = viewedProducts.filter(
         (item) => item._id !== product._id

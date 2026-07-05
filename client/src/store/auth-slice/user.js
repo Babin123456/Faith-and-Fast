@@ -274,8 +274,17 @@ if (rawToken && !tokenIsValid) {
 const storedToken = tokenIsValid ? rawToken : null;
 const storedUserRaw = tokenIsValid ? localStorage.getItem("user") : null;
 
+let parsedUser = null;
+if (storedUserRaw) {
+  try {
+    parsedUser = JSON.parse(storedUserRaw);
+  } catch {
+    localStorage.removeItem("user");
+  }
+}
+
 const initialState = {
-  user: storedUserRaw ? JSON.parse(storedUserRaw) : null,
+  user: parsedUser,
   isAuthenticated: tokenIsValid,
   token: storedToken,
   loading: false,

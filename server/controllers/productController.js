@@ -354,12 +354,18 @@ export const getProductByFilter = catchAsyncErrors(async (req, res) => {
       sortBy = "relevant",
       minPrice = 0,
       maxPrice = 20000,
+      rating = "",
+      availability = "",
+      discount = "",
     } = req.query;
 
     const query = {};
 
     if (search) {
-      query.name = { $regex: search, $options: "i" };
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
     }
 
     if (category) {
@@ -370,29 +376,85 @@ export const getProductByFilter = catchAsyncErrors(async (req, res) => {
       query.subcategory = { $in: subcategory.split(",") };
     }
 
-    if (color) {
-      query.color = { $in: color.split(",") };
-    }
+    // Color group mapping to handle solid colors, gradient colors, etc.
+    const colorGroupMap = {
+      "solid colors": ["red", "blue", "green", "black", "white", "yellow", "purple", "pink", "orange"],
+      "gradient colors": ["red to yellow", "blue to green", "purple to pink", "black to white"],
+      "patterned colors": ["stripes (blue, white)", "plaid (red, black)", "polka dots (white on black)", "floral (pink, green)"],
+      "multi-colored": ["rainbow", "color block (red, blue, green)", "neon mix (neon green, pink)"],
+      "customizable colors": ["custom shade 1", "custom shade 2", "custom shade 3"],
+      "textured colors": ["matte black", "glossy red", "metallic gold", "satin silver"],
+      "limited edition colors": ["holiday red", "summer blue", "autumn orange"],
+      "neon colors": ["neon green", "neon yellow", "neon pink", "neon orange"],
+      "neutral & earthy tones": ["beige", "grey", "brown", "olive", "cream"]
+    };
 
+    let targetColors = [];
+    if (color) {
+      color.split(",").forEach(c => {
+        const lowerC = c.toLowerCase().trim();
+        if (colorGroupMap[lowerC]) {
+          targetColors.push(...colorGroupMap[lowerC]);
+        } else {
+          targetColors.push(c);
+        }
+      });
+    }
     if (coloroptions) {
-      query.coloroptions = { $in: coloroptions.split(",") };
+      targetColors.push(...coloroptions.split(","));
+    }
+    targetColors = [...new Set(targetColors.map(c => c.trim()))];
+
+    if (targetColors.length > 0) {
+      query.coloroptions = { $in: targetColors.map(c => new RegExp(`^${c}$`, "i")) };
     }
 
     if (size) {
-      query.size = { $in: size.split(",") };
+      query.size = { $in: size.split(",").map(s => new RegExp(`^${s}$`, "i")) };
     }
 
     if (sizeoptions) {
-      query.sizeoptions = { $in: sizeoptions.split(",") };
+      query.sizeoptions = { $in: sizeoptions.split(",").map(s => new RegExp(`^${s}$`, "i")) };
     }
 
-    query.price = { $gte: parseInt(minPrice), $lte: parseInt(maxPrice) };
+    if (rating) {
+      query.ratings = { $gte: parseFloat(rating) };
+    }
+
+    if (availability) {
+      if (availability === "in-stock") {
+        query.stock = { $gt: 0 };
+      } else if (availability === "out-of-stock") {
+        query.stock = { $eq: 0 };
+      }
+    }
+
+    if (discount) {
+      query.discount = { $gte: parseInt(discount, 10) };
+    }
+
+    const lo = Number.parseInt(minPrice, 10);
+    const hi = Number.parseInt(maxPrice, 10);
+    if (Number.isFinite(lo) || Number.isFinite(hi)) {
+      query.price = {};
+      if (Number.isFinite(lo)) query.price.$gte = lo;
+      if (Number.isFinite(hi)) query.price.$lte = hi;
+    }
 
     let sortQuery = {};
     if (sortBy === "price-low-high") {
       sortQuery.price = 1;
     } else if (sortBy === "price-high-low") {
       sortQuery.price = -1;
+    } else if (sortBy === "newest") {
+      sortQuery.createdAt = -1;
+    } else if (sortBy === "rating-high-low") {
+      sortQuery.ratings = -1;
+    } else if (sortBy === "popular") {
+      sortQuery.numOfReviews = -1;
+    } else {
+      // Default / Relevant
+      sortQuery.createdAt = -1;
     }
 
     const pageNumber = parseInt(page, 10);

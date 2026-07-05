@@ -9,8 +9,10 @@ import {
   resetContactState,
 } from "@/store/extra-slice/contactSlice";
 
+import { contactConfig } from "../../config/contact";
+
 const ContactUs = () => {
-  const [contactData, setContactData] = useState(null);
+  const [contactData, setContactData] = useState(contactConfig);
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.contact);
 
@@ -23,28 +25,7 @@ const ContactUs = () => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    const dummyData = {
-      contact_details: {
-        email: "support@faithandfast.com",
-        phone: "+91 9999999999",
-        whatsapp: "9999999999",
-        address: "India",
-      },
-      social_links: {
-        whatsapp_link: "9999999999",
-        phone_link: "tel:+919999999999",
-        email_link: "mailto:support@faithandfast.com",
-      },
-      seo_meta: {
-        title: "Contact Faith AND Fast | Get in Touch with Us",
-        description:
-          "Reach out to Faith AND Fast for any inquiries, support, or collaborations. Contact us via phone, email, or WhatsApp.",
-      },
-    };
-
-    setTimeout(() => {
-      setContactData(dummyData);
-    }, 500);
+    // Contact data is loaded synchronously from configuration
   }, []);
 
   const handleChange = (e) => {
