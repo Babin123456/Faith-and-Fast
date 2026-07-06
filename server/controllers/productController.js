@@ -228,7 +228,7 @@ export const updateProductDetails = catchAsyncErrors(async (req, res) => {
           ? [sizeoptions]
           : [],
       }),
-      ...(stock !== undefined && { stock: Number(stock) }),
+      ...(stock !== undefined && { stock: Math.max(0, Number(stock)) }),
       ...(discount !== undefined && { discount: Number(discount) }),
       images: newImages,
     };
