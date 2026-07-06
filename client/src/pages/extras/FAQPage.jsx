@@ -101,7 +101,7 @@ const faqs = [
       <>
         You can visit our{" "}
         <Link
-          to="/contact-us"
+          to="/ContactUs"
           className="text-indigo-500 dark:text-indigo-400 hover:underline"
         >
           Contact Us
@@ -212,7 +212,7 @@ const FAQPage = () => {
           <p className="text-gray-600 dark:text-gray-300 text-lg">
             Still have questions?{" "}
             <Link
-              to="/contactus"
+              to="/ContactUs"
               className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline transition-colors duration-200"
             >
               Get in Touch
