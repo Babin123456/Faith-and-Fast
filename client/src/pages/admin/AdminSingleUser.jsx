@@ -11,7 +11,7 @@ import {
   updateUserStatus,
 } from "@/store/auth-slice/user";
 import Spinner from "../extras/Spinner";
-import ConfirmationModal from "../extras/ConfirmationModel";
+import ConfirmationModal from "../extras/ConfirmationModal";
 import { toast } from "react-toastify";
 import { ArrowLeft, Delete, Edit } from "lucide-react";
 import { Update } from "@mui/icons-material";
