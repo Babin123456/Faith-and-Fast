@@ -12,7 +12,7 @@ import {
 } from "@/store/product-slice/productDetails";
 import ImageSlider from "./ImageSlider";
 import ProductCard from "./ProductCard";
-import RecentlyViewed from "../components/RecentlyViewed";
+import RecentlyViewed from "../components/RecentlyViewedProducts";
 import RecommendationSection from "../components/RecommendationSection";
 import ProductDetailsSkeleton from "../components/skeletons/ProductDetailsSkeleton";
 import MetaData from "../extras/MetaData";
