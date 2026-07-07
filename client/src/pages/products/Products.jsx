@@ -9,7 +9,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { addToWishList } from "@/store/add-to-wishList/addToWishList";
 import { toast } from "react-toastify";
 import categories from "./Categories";
-import colors from "../extras/Colors";
+import colors from "../extras/ProductColorOptions";
 import sizes from "../extras/ProductSizeSelector";
 import PropTypes from "prop-types";
 import MetaData from "../extras/MetaData";
