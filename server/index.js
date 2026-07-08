@@ -4,8 +4,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import rateLimit from "express-rate-limit";
-import helmet from "helmet";
 import morgan from "morgan";
+import securityMiddleware from "./middleware/security.js";
 import connectDB from "./config/connectDB.js";
 import validateEnv from "./config/validateEnv.js";
 import errorMiddleware from "./middleware/errorMiddleware.js";
@@ -48,11 +48,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
-app.use(
-  helmet({
-    crossOriginResourcePolicy: false,
-  })
-);
+securityMiddleware(app);
 app.use(limiter);
 app.use(morgan("combined"));
 app.use(errorMiddleware);
