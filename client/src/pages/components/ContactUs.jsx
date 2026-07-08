@@ -1,16 +1,18 @@
 import { motion } from "framer-motion";
 import { WhatsApp } from "@mui/icons-material";
 import { Mail, Phone, MapPin } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import {
   submitContactMessage,
   resetContactState,
 } from "@/store/extra-slice/contactSlice";
+import { contactConfig } from "../../config/contact";
+import { validateContactForm } from "../../utils/contactValidation";
 
 const ContactUs = () => {
-  const [contactData, setContactData] = useState(null);
+  const [contactData] = useState(contactConfig);
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.contact);
 
@@ -22,31 +24,6 @@ const ContactUs = () => {
   });
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    const dummyData = {
-      contact_details: {
-        email: "support@faithandfast.com",
-        phone: "+91 9999999999",
-        whatsapp: "9999999999",
-        address: "India",
-      },
-      social_links: {
-        whatsapp_link: "9999999999",
-        phone_link: "tel:+919999999999",
-        email_link: "mailto:support@faithandfast.com",
-      },
-      seo_meta: {
-        title: "Contact Faith AND Fast | Get in Touch with Us",
-        description:
-          "Reach out to Faith AND Fast for any inquiries, support, or collaborations. Contact us via phone, email, or WhatsApp.",
-      },
-    };
-
-    setTimeout(() => {
-      setContactData(dummyData);
-    }, 500);
-  }, []);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -57,25 +34,9 @@ const ContactUs = () => {
   };
 
   const validate = () => {
-    const newErrors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!form.name.trim()) {
-      newErrors.name = "Name is required";
-    }
-    if (!form.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!emailRegex.test(form.email.trim())) {
-      newErrors.email = "Please enter a valid email address";
-    }
-    if (!form.message.trim()) {
-      newErrors.message = "Message is required";
-    } else if (form.message.trim().length > 2000) {
-      newErrors.message = "Message cannot exceed 2000 characters";
-    }
-
+    const { errors: newErrors, isValid } = validateContactForm(form);
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return isValid;
   };
 
   const handleSubmit = (e) => {

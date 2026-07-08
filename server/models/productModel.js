@@ -95,6 +95,11 @@ const productSchema = new mongoose.Schema(
   }
 );
 
+productSchema.index({ category: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ ratings: -1 });
+productSchema.index({ createdAt: -1 });
+
 productSchema.index(
   { name: "text", description: "text" },
   { weights: { name: 10, description: 5 } }
