@@ -62,12 +62,13 @@ const App = () => {
   return (
     <div className="flex flex-col bg-white dark:bg-black text-black dark:text-white">
       <ToastContainer position="top-center" />
+
+      <ErrorBoundary>
       {/* <DiscountHeader /> */}
       <PromoBanner />
       <Header />
       <WhatsAppButton />
 
-      <ErrorBoundary>
       <Routes>
         {/* User routes */}
         <Route path="/" element={<Home />} />
@@ -191,10 +192,9 @@ const App = () => {
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-      </ErrorBoundary>
-
       <ScrollToTop />
       <Footer />
+      </ErrorBoundary>
     </div>
   );
 };
