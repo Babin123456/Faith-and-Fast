@@ -8,7 +8,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import connectDB from "./config/connectDB.js";
 import validateEnv from "./config/validateEnv.js";
-import errorMiddleware from "./middleware/error.js";
+import errorMiddleware from "./middleware/errorMiddleware.js";
 dotenv.config();
 validateEnv();
 
@@ -75,6 +75,7 @@ import productRouter from "./route/productRoute.js";
 import supportRouter from "./route/supportRoute.js";
 import userRouter from "./route/userRoute.js";
 import wishListRouter from "./route/wishListRoute.js";
+import reviewRouter from "./route/reviewRoute.js";
 
 app.use("/api/address", addressRouter);
 app.use("/api/cart", cartRouter);
@@ -88,6 +89,7 @@ app.use("/api/product", productRouter);
 app.use("/api/support", supportRouter);
 app.use("/api/user", userRouter);
 app.use("/api/wishlist", wishListRouter);
+app.use("/api/review", reviewRouter);
 
 connectDB().then(() => {
   const server = app.listen(PORT, () =>
