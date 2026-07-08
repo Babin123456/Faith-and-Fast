@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import authPersistMiddleware from "../middleware/authPersist";
 import darkModeReducer from "./extra-slice/darkModeSlice";
 import authReducer from "./auth-slice/user";
 import productReducer from "./product-slice/productSlice";
@@ -39,6 +40,8 @@ const store = configureStore({
     contact: contactReducer,
     inventory: inventoryReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(authPersistMiddleware),
 });
 
 export default store;
