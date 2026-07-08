@@ -8,6 +8,7 @@ import {
   getProductDetails,
   getProductReviews,
   getSimilarProducts,
+  getTopReviews,
   postProductReview,
   searchProduct,
   updateProductDetails,
@@ -51,6 +52,8 @@ productRouter.post("/search", searchProduct);
 productRouter.get("/similar", getSimilarProducts);
 
 productRouter.get("/trending", getTrendingProducts);
+
+productRouter.get("/top-reviews", getTopReviews);
 
 productRouter.get(
   "/frequently-bought-together/:productId",
