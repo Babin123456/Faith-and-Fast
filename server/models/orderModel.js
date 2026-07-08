@@ -139,8 +139,11 @@ orderSchema.pre("save", function (next) {
   next();
 });
 
-orderSchema.index({ user: 1 });
-orderSchema.index({ orderStatus: 1 });
+orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ orderStatus: 1, createdAt: -1 });
+orderSchema.index({ paymentStatus: 1 });
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ user: 1, paymentStatus: 1 });
 
 const OrderModel = mongoose.model("Order", orderSchema);
 
