@@ -15,10 +15,11 @@ import {
 import admin from "../middleware/Admin.js";
 import upload from "../middleware/multer.js";
 import { getOrderAnalytics } from "../controllers/analyticsController.js";
+import { orderLimiter } from "../middleware/rateLimiter.js";
 
 const orderRouter = express.Router();
 
-orderRouter.post("/create", auth, createOrder);
+orderRouter.post("/create", auth, orderLimiter, createOrder);
 
 orderRouter.post(
   "/upload-payment-screenshot",
