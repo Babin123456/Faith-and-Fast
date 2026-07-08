@@ -1,18 +1,21 @@
 import { motion } from "framer-motion";
 import { WhatsApp } from "@mui/icons-material";
 import { Mail, Phone, MapPin } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import {
   submitContactMessage,
   resetContactState,
 } from "@/store/extra-slice/contactSlice";
+import contactConfig from "@/config/contact";
+import ContactSkeleton from "./skeletons/ContactSkeleton";
+import MetaData from "../extras/MetaData";
 
 const ContactUs = () => {
-  const [contactData, setContactData] = useState(null);
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.contact);
+  const contactData = contactConfig;
 
   const [form, setForm] = useState({
     name: "",
@@ -21,31 +24,6 @@ const ContactUs = () => {
     message: "",
   });
   const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    const dummyData = {
-      contact_details: {
-        email: "support@faithandfast.com",
-        phone: "+91 9999999999",
-        whatsapp: "9999999999",
-        address: "India",
-      },
-      social_links: {
-        whatsapp_link: "9999999999",
-        phone_link: "tel:+919999999999",
-        email_link: "mailto:support@faithandfast.com",
-      },
-      seo_meta: {
-        title: "Contact Faith AND Fast | Get in Touch with Us",
-        description:
-          "Reach out to Faith AND Fast for any inquiries, support, or collaborations. Contact us via phone, email, or WhatsApp.",
-      },
-    };
-
-    setTimeout(() => {
-      setContactData(dummyData);
-    }, 500);
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -100,10 +78,16 @@ const ContactUs = () => {
       });
   };
 
-  if (!contactData) return <p>Loading...</p>;
+  if (!contactData) return <ContactSkeleton />;
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-white transition-all duration-300">
+    <>
+      <MetaData
+        title={contactConfig.seo_meta.title}
+        description={contactConfig.seo_meta.description}
+        keywords="contact, support, faith and fast, customer service, help"
+      />
+      <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-white transition-all duration-300">
       <motion.div
         className="max-w-6xl mx-auto py-16 px-6"
         initial={{ opacity: 0, y: 30 }}
@@ -144,7 +128,7 @@ const ContactUs = () => {
               </p>
               <a
                 className="flex items-center text-lg hover:text-yellow-500 dark:hover:text-red-500 transition"
-                href="tel:+919999999999"
+                href={contactData.social_links.phone_link}
               >
                 <Phone className="w-6 h-6 text-yellow-500 dark:text-red-500 mr-3" />
                 <span>{contactData.contact_details.phone}</span>
@@ -236,8 +220,9 @@ const ContactUs = () => {
             </form>
           </motion.div>
         </div>
-      </motion.div>
-    </div>
+        </motion.div>
+      </div>
+    </>
   );
 };
 
