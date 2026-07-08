@@ -1,4 +1,4 @@
-const contactConfig = {
+export const contactConfig = {
   contact_details: {
     email: "support@faithandfast.com",
     phone: "+91 9999999999",

@@ -21,7 +21,7 @@ MetaData.propTypes = {
 };
 
 MetaData.defaultProps = {
-  title: "Faith AND Fast - E-Commerce Platform",
+  title: "Faith AND Fast - Premium E-commerce Destination",
   description:
     "Discover the latest fashion trends, accessories, and best-selling products at Faith AND Fast. Shop now for exclusive deals!",
   keywords:
