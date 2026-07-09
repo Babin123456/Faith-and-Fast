@@ -6,13 +6,19 @@ import {
   deleteDiscount,
   updateDiscount,
 } from "../controllers/discountController.js";
+import { invalidateCache } from "../utils/cache.js";
 
 const router = express.Router();
 
-router.post("/create", createDiscount);
-router.post("/apply", applyDiscount);
+const clearProductsCache = async (req, res, next) => {
+  await invalidateCache("products:*");
+  next();
+};
+
+router.post("/create", clearProductsCache, createDiscount);
+router.post("/apply", clearProductsCache, applyDiscount);
 router.get("/all", getAllDiscounts);
-router.put("/update/:discountId", updateDiscount);
-router.delete("/delete/:discountId", deleteDiscount);
+router.put("/update/:discountId", clearProductsCache, updateDiscount);
+router.delete("/delete/:discountId", clearProductsCache, deleteDiscount);
 
 export default router;
