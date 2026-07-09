@@ -15,6 +15,7 @@ import securityMiddleware from "./middleware/security.js";
 import connectDB from "./config/connectDB.js";
 import validateEnv from "./config/validateEnv.js";
 import errorMiddleware from "./middleware/errorMiddleware.js";
+import responseWrapper from "./middleware/responseWrapper.js";
 dotenv.config();
 validateEnv();
 
@@ -53,6 +54,7 @@ app.use(
 );
 
 app.use(cookieParser());
+app.use(responseWrapper);
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
 securityMiddleware(app);
