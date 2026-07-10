@@ -17,6 +17,7 @@ const contactLimiter = rateLimit({
   message: {
     success: false,
     message: "Too many contact submissions. Please try again after 15 minutes.",
+    retryAfter: "15m",
   },
 });
 

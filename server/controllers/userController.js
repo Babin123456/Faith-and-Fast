@@ -426,10 +426,10 @@ export const verifyOtp = catchAsyncErrors(async (req, res) => {
       });
     }
 
-    await UserModel.findByIdAndUpdate(user._id, {
-      forgot_password_otp: "",
-      forgot_password_expiry: "",
-    });
+    // NOTE: the OTP is intentionally NOT cleared here. It is consumed (and
+    // cleared) only by resetPassword, after the new password is actually set,
+    // so the reset step can re-verify it. verifyOtp is a UX pre-check;
+    // resetPassword is the authoritative authorization gate.
 
     return res.json({
       message: "OTP verified successfully.",
@@ -447,12 +447,12 @@ export const verifyOtp = catchAsyncErrors(async (req, res) => {
 
 export const resetPassword = catchAsyncErrors(async (req, res) => {
   try {
-    const { email, newPassword, confirmPassword } = req.body;
+    const { email, otp, newPassword, confirmPassword } = req.body;
 
-    if (!email || !newPassword || !confirmPassword) {
+    if (!email || !otp || !newPassword || !confirmPassword) {
       return res.status(400).json({
         message:
-          "Please provide required fields: email, newPassword, and confirmPassword.",
+          "Please provide required fields: email, otp, newPassword, and confirmPassword.",
         error: true,
         success: false,
       });
@@ -484,6 +484,36 @@ export const resetPassword = catchAsyncErrors(async (req, res) => {
       });
     }
 
+    // Authorize the reset. Previously this endpoint changed the password with
+    // NO OTP check, so anyone who knew a registered email could take over the
+    // account (including admins). Require the OTP that forgotPassword emailed
+    // for this account, and verify it exactly as verifyOtp does.
+    if (!user.forgot_password_otp || !user.forgot_password_expiry) {
+      return res.status(400).json({
+        message: "No active password reset request. Please request a new OTP.",
+        error: true,
+        success: false,
+      });
+    }
+
+    const now = new Date();
+    const expiry = new Date(user.forgot_password_expiry);
+    if (isNaN(expiry.getTime()) || expiry < now) {
+      return res.status(400).json({
+        message: "OTP has expired. Please request a new one.",
+        error: true,
+        success: false,
+      });
+    }
+
+    if (String(otp) !== String(user.forgot_password_otp)) {
+      return res.status(400).json({
+        message: "Invalid OTP. Please try again.",
+        error: true,
+        success: false,
+      });
+    }
+
     const salt = await bcryptjs.genSalt(10);
     const hashPassword = await bcryptjs.hash(newPassword, salt);
 
@@ -491,6 +521,8 @@ export const resetPassword = catchAsyncErrors(async (req, res) => {
       user._id,
       {
         password: hashPassword,
+        forgot_password_otp: "",
+        forgot_password_expiry: "",
       },
       { new: true }
     );
