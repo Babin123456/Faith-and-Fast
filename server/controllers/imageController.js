@@ -1,7 +1,6 @@
 import { uploadImage, deleteImage } from "../utils/cloudinary.js";
 import { validateImageFile } from "../utils/cloudinaryValidator.js";
-import Product from "../models/productModel.js";
-l;
+import { getCloudinaryUploadOptions } from "../utils/imageCompressor.js";
 
 const uploadImageController = async (req, res) => {
   try {
@@ -16,8 +15,7 @@ const uploadImageController = async (req, res) => {
       });
     }
 
-    const uploadOptions = getCloudinaryUploadOptions();
-    const uploadResult = await uploadImage(file, uploadOptions);
+    const uploadResult = await uploadImage(file);
 
     return res.json({
       message: "Image uploaded successfully",

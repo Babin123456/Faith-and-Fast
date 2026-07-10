@@ -4,8 +4,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import rateLimit from "express-rate-limit";
-import helmet from "helmet";
 import morgan from "morgan";
+import securityMiddleware from "./middleware/security.js";
 import connectDB from "./config/connectDB.js";
 import validateEnv from "./config/validateEnv.js";
 import errorMiddleware from "./middleware/errorMiddleware.js";
@@ -48,11 +48,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
-app.use(
-  helmet({
-    crossOriginResourcePolicy: false,
-  })
-);
+securityMiddleware(app);
 app.use(limiter);
 app.use(morgan("combined"));
 app.use(errorMiddleware);
@@ -66,7 +62,7 @@ app.get("/", (req, res) => {
 import addressRouter from "./route/addressRoute.js";
 import cartRouter from "./route/cartRoute.js";
 import categoryRouter from "./route/categoryRoute.js";
-import discountRouter from "./route/discountRoutes.js";
+import discountRouter from "./route/discountRoute.js";
 import inventoryRouter from "./route/inventoryRoute.js";
 import orderRouter from "./route/orderRoute.js";
 import paymentRouter from "./route/paymentRoute.js";
@@ -74,7 +70,7 @@ import paymentSettingsRouter from "./route/paymentSettingsRoute.js";
 import productRouter from "./route/productRoute.js";
 import supportRouter from "./route/supportRoute.js";
 import userRouter from "./route/userRoute.js";
-import wishListRouter from "./route/wishListRoute.js";
+import wishListRouter from "./route/wishlistRoute.js";
 import reviewRouter from "./route/reviewRoute.js";
 
 app.use("/api/address", addressRouter);
