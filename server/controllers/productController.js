@@ -228,7 +228,7 @@ export const updateProductDetails = catchAsyncErrors(async (req, res) => {
           ? [sizeoptions]
           : [],
       }),
-      ...(stock !== undefined && { stock: Number(stock) }),
+      ...(stock !== undefined && { stock: Math.max(0, Number(stock)) }),
       ...(discount !== undefined && { discount: Number(discount) }),
       images: newImages,
     };
@@ -505,6 +505,48 @@ export const getSimilarProducts = catchAsyncErrors(async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+});
+
+export const getTopReviews = catchAsyncErrors(async (req, res) => {
+  try {
+    const products = await ProductModel.find({ "reviews.0": { $exists: true } })
+      .limit(10)
+      .select("name images price reviews");
+
+    const topReviews = [];
+
+    products.forEach((product) => {
+      product.reviews.forEach((review) => {
+        if (review.rating >= 4) {
+          topReviews.push({
+            productId: product._id,
+            productName: product.name,
+            productImage: product.images?.[0]?.url || "",
+            price: product.price,
+            reviewId: review._id,
+            userName: review.name || "Anonymous",
+            rating: review.rating,
+            comment: review.comment,
+            createdAt: review.createdAt || new Date(),
+          });
+        }
+      });
+    });
+
+    topReviews.sort((a, b) => b.rating - a.rating);
+    const sorted = topReviews.slice(0, 6);
+
+    return res.status(200).json({
+      success: true,
+      reviews: sorted,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || "Internal Server Error",
       error: true,
       success: false,
     });
