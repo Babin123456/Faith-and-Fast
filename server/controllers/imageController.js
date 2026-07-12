@@ -1,19 +1,8 @@
 import { uploadImage, deleteImage } from "../utils/cloudinary.js";
-import { validateImageFile } from "../utils/cloudinaryValidator.js";
-import { getCloudinaryUploadOptions } from "../utils/imageCompressor.js";
 
 const uploadImageController = async (req, res) => {
   try {
     const file = req.file;
-
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
-      return res.status(400).json({
-        message: validation.message,
-        error: true,
-        success: false,
-      });
-    }
 
     const uploadResult = await uploadImage(file);
 
