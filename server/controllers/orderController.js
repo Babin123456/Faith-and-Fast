@@ -17,7 +17,9 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
       couponCode,
       upiReference,
       paymentScreenshot,
+      idempotencyKey,
     } = req.body;
+
     // NOTE: totalAmount and discountAmount are intentionally NOT read from the
     // request body — they are recomputed server-side below from real DB prices
     // and a re-validated coupon, so a tampered client-supplied total is ignored.
@@ -26,6 +28,21 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
 
     const createdAt = new Date();
     deliveryDate = new Date(createdAt);
+    
+    // Enforce idempotency for checkout retries. For a given user + key,
+    // createOrder returns the previously created order instead of creating
+    // duplicates.
+    if (idempotencyKey && String(idempotencyKey).trim()) {
+      const existing = await OrderModel.findOne({
+        user: userId,
+        idempotencyKey: String(idempotencyKey).trim(),
+      }).populate("user", "name email").populate("products.product", "name price images");
+
+      if (existing) {
+        return res.status(200).json({ success: true, order: existing, idempotent: true });
+      }
+    }
+
     deliveryDate.setDate(createdAt.getDate() + 5);
 
     const method = paymentMethod || "COD";
@@ -115,6 +132,23 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
 
     const totalAmount = Math.max(0, itemsTotal - discountAmount);
 
+    // Stock hardening: fail fast if any line item is out of stock.
+    for (const item of orderItems) {
+      const product = await ProductModel.findById(item.product);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: `Product ${item.product} not found`,
+        });
+      }
+      if (product.stock < item.quantity) {
+        return res.status(409).json({
+          success: false,
+          message: `Insufficient stock for "${product.name}" (available: ${product.stock}, required: ${item.quantity})`,
+        });
+      }
+    }
+
     const newOrder = new OrderModel({
       user: userId,
       address: addressId,
@@ -123,6 +157,7 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
       couponCode: appliedCouponCode,
       discountAmount,
       paymentMethod: method,
+      idempotencyKey: idempotencyKey && String(idempotencyKey).trim() ? String(idempotencyKey).trim() : "",
       upiReference: method === "ONLINE" ? upiReference || "" : "",
       paymentScreenshot:
         method === "ONLINE" && paymentScreenshot
@@ -131,10 +166,14 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
               url: paymentScreenshot.url || "",
             }
           : { public_id: "", url: "" },
-      orderStatus: "PENDING",
-      paymentStatus: "PENDING",
+      // Controlled status transitions:
+      // - COD: PENDING -> CONFIRMED and paymentStatus -> COMPLETED (at placement)
+      // - ONLINE/STRIPE: stays pending until verification/success.
+      orderStatus: method === "COD" ? "CONFIRMED" : "PENDING",
+      paymentStatus: method === "COD" ? "COMPLETED" : "PENDING",
       deliveryDate,
     });
+
 
     await newOrder.save();
 
@@ -155,6 +194,11 @@ export const createOrder = catchAsyncErrors(async (req, res) => {
         html: receiptHTML,
       });
     }
+
+    // Keep receipt/payment email side-effects idempotent-ish:
+    // for COD we set paymentStatus COMPLETED at placement, so retried calls
+    // return the existing order early above.
+
 
     res.status(201).json({ success: true, order: populatedOrder });
   } catch (error) {
@@ -384,8 +428,9 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res) => {
 
     console.log("Request Body:", req.body);
 
-    const validStatuses = ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"];
+    const validStatuses = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
     if (!validStatuses.includes(orderStatus)) {
+
       return res.status(400).json({
         success: false,
         message: "Invalid order status",
