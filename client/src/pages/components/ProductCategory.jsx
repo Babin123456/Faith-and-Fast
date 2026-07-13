@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { addToWishList } from "@/store/add-to-wishList/addToWishList";
+import StockBadge from "./StockBadge";
 
 const ProductCategory = ({ title, items }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -107,6 +108,7 @@ const ProductCategory = ({ title, items }) => {
               transition={{ duration: 0.2 }}
             >
               <div className="relative cursor-pointer">
+                <StockBadge stock={item.stock ?? 10} />
                 <img
                   src={item.images?.[0]?.url || "/placeholder-product.jpg"}
                   alt={item.name}

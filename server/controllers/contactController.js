@@ -81,6 +81,10 @@ export const submitContactMessage = catchAsyncErrors(async (req, res) => {
     message: "Your message has been sent successfully. We'll get back to you soon!",
     error: false,
     success: true,
+    data: {
+      id: contactMessage._id,
+      createdAt: contactMessage.createdAt,
+    },
   });
 });
 

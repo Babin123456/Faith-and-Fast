@@ -1,14 +1,22 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const buffer = require("buffer");
+if (!buffer.SlowBuffer) {
+  buffer.SlowBuffer = buffer.Buffer;
+}
 import cloudinary from "cloudinary";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import rateLimit from "express-rate-limit";
-import helmet from "helmet";
 import morgan from "morgan";
+import securityMiddleware from "./middleware/security.js";
 import connectDB from "./config/connectDB.js";
 import validateEnv from "./config/validateEnv.js";
-import errorMiddleware from "./middleware/error.js";
+import errorMiddleware from "./middleware/errorMiddleware.js";
+import responseWrapper from "./middleware/responseWrapper.js";
+import { initRedis } from "./utils/cache.js";
 dotenv.config();
 validateEnv();
 
@@ -25,6 +33,7 @@ const limiter = rateLimit({
 });
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
@@ -46,13 +55,10 @@ app.use(
 );
 
 app.use(cookieParser());
+app.use(responseWrapper);
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
-app.use(
-  helmet({
-    crossOriginResourcePolicy: false,
-  })
-);
+securityMiddleware(app);
 app.use(limiter);
 app.use(morgan("combined"));
 app.use(errorMiddleware);
@@ -66,7 +72,7 @@ app.get("/", (req, res) => {
 import addressRouter from "./route/addressRoute.js";
 import cartRouter from "./route/cartRoute.js";
 import categoryRouter from "./route/categoryRoute.js";
-import discountRouter from "./route/discountRoutes.js";
+import discountRouter from "./route/discountRoute.js";
 import inventoryRouter from "./route/inventoryRoute.js";
 import orderRouter from "./route/orderRoute.js";
 import paymentRouter from "./route/paymentRoute.js";
@@ -92,6 +98,7 @@ app.use("/api/product", productRouter);
 app.use("/api/support", supportRouter);
 app.use("/api/user", userRouter);
 app.use("/api/wishlist", wishListRouter);
+app.use("/api/review", reviewRouter);
 
 connectDB().then(() => {
   startMonitoring(healthConfig.monitoringInterval);
