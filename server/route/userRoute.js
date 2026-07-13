@@ -20,6 +20,7 @@ import {
 import auth from "../middleware/auth.js";
 import upload from "../middleware/multer.js";
 import admin from "../middleware/Admin.js";
+import authRateLimiter from "../middleware/authRateLimiter.js";
 
 const userRouter = express.Router();
 
@@ -29,17 +30,17 @@ userRouter.post("/verify-email", verifyEmailOtp);
 
 userRouter.post("/resend-otp", resendOtp);
 
-userRouter.post("/login", loginUser);
+userRouter.post("/login", authRateLimiter, loginUser);
 
 userRouter.get("/logout", logoutUser);
 
 userRouter.put("/upload-avatar", upload.single("avatar"), auth, uploadAvatar);
 
-userRouter.put("/forgot-password", forgotPassword);
+userRouter.put("/forgot-password", authRateLimiter, forgotPassword);
 
-userRouter.put("/verify-otp", verifyOtp);
+userRouter.put("/verify-otp", authRateLimiter, verifyOtp);
 
-userRouter.put("/reset-password", resetPassword);
+userRouter.put("/reset-password", authRateLimiter, resetPassword);
 
 userRouter.get("/me", auth, getUserDetails);
 
