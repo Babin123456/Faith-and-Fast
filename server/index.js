@@ -16,6 +16,7 @@ import connectDB from "./config/connectDB.js";
 import validateEnv from "./config/validateEnv.js";
 import errorMiddleware from "./middleware/errorMiddleware.js";
 import responseWrapper from "./middleware/responseWrapper.js";
+import { initRedis } from "./utils/cache.js";
 dotenv.config();
 validateEnv();
 
@@ -97,6 +98,7 @@ app.use("/api/wishlist", wishListRouter);
 app.use("/api/review", reviewRouter);
 
 connectDB().then(() => {
+  initRedis().catch((err) => console.error("Redis init failed:", err));
   const server = app.listen(PORT, () =>
     console.log(`Server is running on port ${PORT}`)
   );
