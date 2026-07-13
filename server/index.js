@@ -1,3 +1,9 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const buffer = require("buffer");
+if (!buffer.SlowBuffer) {
+  buffer.SlowBuffer = buffer.Buffer;
+}
 import cloudinary from "cloudinary";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -25,6 +31,7 @@ const limiter = rateLimit({
 });
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
