@@ -34,7 +34,18 @@ export const updatePaymentSettings = catchAsyncErrors(async (req, res) => {
     }
 
     if (typeof upiId === "string") {
-      settings.upiId = upiId.trim();
+      const upiTrimmed = upiId.trim();
+      if (upiTrimmed !== "") {
+        // Standard UPI validation regex (e.g. username@bankname)
+        const upiRegex = /^[\w.\-_]{2,256}@[a-zA-Z]{2,64}$/;
+        if (!upiRegex.test(upiTrimmed)) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid UPI ID format. Correct format is name@bank",
+          });
+        }
+      }
+      settings.upiId = upiTrimmed;
     }
 
     if (req.file) {

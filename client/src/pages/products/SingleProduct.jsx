@@ -12,7 +12,7 @@ import {
 } from "@/store/product-slice/productDetails";
 import ImageSlider from "./ImageSlider";
 import ProductCard from "./ProductCard";
-import RecentlyViewed from "../components/RecentlyViewed";
+import RecentlyViewed from "../components/RecentlyViewedProducts";
 import RecommendationSection from "../components/RecommendationSection";
 import ProductDetailsSkeleton from "../components/skeletons/ProductDetailsSkeleton";
 import MetaData from "../extras/MetaData";
@@ -122,8 +122,13 @@ const ProductDetails = ({ products }) => {
 
   useEffect(() => {
     if (product && product._id) {
-      let viewedProducts =
-        JSON.parse(localStorage.getItem("recentlyViewed")) || [];
+      let viewedProducts = [];
+      try {
+        const raw = JSON.parse(localStorage.getItem("recentlyViewed"));
+        if (Array.isArray(raw)) viewedProducts = raw;
+      } catch {
+        /* ignore corrupt or non-array value */
+      }
 
       viewedProducts = viewedProducts.filter(
         (item) => item._id !== product._id

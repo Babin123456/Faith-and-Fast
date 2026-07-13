@@ -32,6 +32,7 @@ orderRouter.put(
   "/admin/verify-payment/:orderId",
   auth,
   admin,
+  clearOrderCache,
   verifyPayment
 );
 
@@ -39,16 +40,16 @@ orderRouter.get("/myorder", auth, myOrders);
 
 orderRouter.get("/get/admin", auth, admin, getAllOrders);
 
-orderRouter.get("/admin/analytics", auth, admin, getOrderAnalytics);
+orderRouter.get("/admin/analytics", auth, admin, cacheMiddleware("analytics:get", 60), getOrderAnalytics);
 
 orderRouter.get("/get/:orderId", auth, getSingleOrder);
 
-orderRouter.put("/admin/update/:orderId", auth, admin, updateOrderStatus);
+orderRouter.put("/admin/update/:orderId", auth, admin, clearOrderCache, updateOrderStatus);
 
-orderRouter.put("/cancel/:orderId", auth, cancelOrder);
+orderRouter.put("/cancel/:orderId", auth, clearOrderCache, cancelOrder);
 
-orderRouter.delete("/admin/delete/:orderId", auth, admin, deleteOrder);
+orderRouter.delete("/admin/delete/:orderId", auth, admin, clearOrderCache, deleteOrder);
 
-orderRouter.delete("/admin/delete-all", auth, admin, deleteAllOrders);
+orderRouter.delete("/admin/delete-all", auth, admin, clearOrderCache, deleteAllOrders);
 
 export default orderRouter;
