@@ -559,22 +559,12 @@ export const getUserDetails = catchAsyncErrors(async (req, res) => {
     const user = await UserModel.findById(req.user._id);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return res.sendError(404, "USER_NOT_FOUND", "User not found");
     }
 
-    res.status(200).json({
-      success: true,
-      user,
-    });
+    return res.sendSuccess({ user });
   } catch (error) {
-    return res.status(500).json({
-      message: error.message || "Server error while fetching user details",
-      error: true,
-      success: false,
-    });
+    return res.sendError(500, "SERVER_ERROR", error.message || "Server error while fetching user details");
   }
 });
 

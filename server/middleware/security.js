@@ -59,7 +59,6 @@ const securityMiddleware = (app) => {
       xContentTypeOptions: true,
       xDnsPrefetchControl: { allow: true },
       xXssProtection: true,
-      noSniff: true,
     })
   );
 
