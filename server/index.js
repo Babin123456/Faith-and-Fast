@@ -77,9 +77,12 @@ import paymentSettingsRouter from "./route/paymentSettingsRoute.js";
 import productRouter from "./route/productRoute.js";
 import supportRouter from "./route/supportRoute.js";
 import userRouter from "./route/userRoute.js";
-import wishListRouter from "./route/wishlistRoute.js";
-import reviewRouter from "./route/reviewRoute.js";
+import wishListRouter from "./route/wishListRoute.js";
+import healthRouter from "./route/healthRoute.js";
+import { startMonitoring } from "./utils/systemMonitor.js";
+import healthConfig from "./config/healthConfig.js";
 
+app.use("/api/health", healthRouter);
 app.use("/api/address", addressRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/category", categoryRouter);
@@ -95,37 +98,28 @@ app.use("/api/wishlist", wishListRouter);
 app.use("/api/review", reviewRouter);
 
 connectDB().then(() => {
-  initRedis().catch((err) => console.error("Redis init failed:", err));
+  startMonitoring(healthConfig.monitoringInterval);
+
   const server = app.listen(PORT, () =>
     console.log(`Server is running on port ${PORT}`)
   );
 
-  // Graceful shutdown helper — close the HTTP server so in-flight requests
-  // can finish before the process exits. Log every exit reason distinctly so
-  // operators can tell a crash from a signal-triggered stop in the logs.
   const shutdown = (reason, code = 1) => {
     console.error(`[shutdown] reason=${reason} code=${code}`);
     server.close(() => process.exit(code));
-    // Safety net: force-exit after 10 s if connections linger.
     setTimeout(() => process.exit(code), 10_000).unref();
   };
 
-  // Single unhandledRejection handler (was duplicated — both fired on every
-  // unhandled rejection, causing a race between two concurrent shutdowns).
   process.on("unhandledRejection", (err) => {
     console.error(`[unhandledRejection] ${err?.message ?? err}`);
     shutdown("unhandledRejection");
   });
 
-  // Synchronous throw that escaped all try/catch blocks.
   process.on("uncaughtException", (err) => {
     console.error(`[uncaughtException] ${err?.message ?? err}`);
     shutdown("uncaughtException");
   });
 
-  // Container / PM2 / Heroku stop signal — exit cleanly with code 0.
   process.on("SIGTERM", () => shutdown("SIGTERM", 0));
-
-  // Ctrl-C in development — same clean exit.
   process.on("SIGINT", () => shutdown("SIGINT", 0));
 });
