@@ -1,4 +1,7 @@
 import express from "express";
+import auth from "../middleware/auth.js";
+import admin from "../middleware/Admin.js";
+import { requirePermission } from "../middleware/permission.js";
 import {
   createDiscount,
   applyDiscount,
@@ -9,10 +12,10 @@ import {
 
 const router = express.Router();
 
-router.post("/create", createDiscount);
-router.post("/apply", applyDiscount);
-router.get("/all", getAllDiscounts);
-router.put("/update/:discountId", updateDiscount);
-router.delete("/delete/:discountId", deleteDiscount);
+router.post("/create", auth, requirePermission("discounts:write"), createDiscount);
+router.post("/apply", applyDiscount); // user apply is public
+router.get("/all", auth, admin, getAllDiscounts);
+router.put("/update/:discountId", auth, requirePermission("discounts:write"), updateDiscount);
+router.delete("/delete/:discountId", auth, requirePermission("discounts:write"), deleteDiscount);
 
 export default router;

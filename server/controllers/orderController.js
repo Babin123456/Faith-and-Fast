@@ -3,6 +3,7 @@ import OrderModel from "../models/orderModel.js";
 import ProductModel from "../models/productModel.js";
 import UserModel from "../models/userModel.js";
 import DiscountModel from "../models/discountModel.js";
+import { writeAuditLog } from "../utils/auditLogger.js";
 import sendEmail from "../config/sendEmail.js";
 import generateReceiptHTML from "../utils/generateReceipt.js";
 import { uploadImage } from "../utils/cloudinary.js";
@@ -352,6 +353,7 @@ export const getAllOrders = catchAsyncErrors(async (req, res) => {
       .populate("user", "name email")
       .populate("address", "address_line city pincode state country mobile")
       .populate("products.product", "name price images")
+      .populate("lastUpdatedBy", "name email")
       .sort({ createdAt: -1 });
 
     if (!orders || orders.length === 0) {
@@ -399,6 +401,11 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res) => {
         message: "Order not found",
       });
     }
+
+    const beforeSnapshot = {
+      orderStatus: order.orderStatus,
+      paymentStatus: order.paymentStatus,
+    };
 
     order.orderStatus = orderStatus;
     if (trackingId) order.trackingId = trackingId;
@@ -498,8 +505,21 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res) => {
       order.stockDeducted = false;
     }
 
+    order.lastUpdatedBy = req.user.id || req.user._id;
     await order.save();
     console.log("Updated Order:", order);
+
+    await writeAuditLog({
+      actorId: req.user.id || req.user._id,
+      actionType: "ORDER_STATUS_UPDATE",
+      targetType: "Order",
+      targetId: order._id,
+      beforeSnapshot,
+      afterSnapshot: {
+        orderStatus: order.orderStatus,
+        paymentStatus: order.paymentStatus,
+      },
+    });
 
     res.status(200).json({
       success: true,

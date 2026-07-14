@@ -84,6 +84,12 @@ const userSchema = new mongoose.Schema(
       enum: ["ADMIN", "USER"],
       default: "USER",
     },
+    permissions: {
+      type: [String],
+      default: function() {
+        return this.role === "ADMIN" ? ["*"] : [];
+      },
+    },
   },
   {
     timestamps: true,

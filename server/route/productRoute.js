@@ -20,13 +20,14 @@ import {
 import admin from "../middleware/Admin.js";
 import auth from "../middleware/auth.js";
 import upload from "../middleware/multer.js";
+import { requirePermission } from "../middleware/permission.js";
 
 const productRouter = express.Router();
 
 productRouter.post(
   "/new",
   auth,
-  admin,
+  requirePermission("products:write"),
   upload.array("images", 10),
   createProduct
 );
@@ -40,12 +41,12 @@ productRouter.get("/get/:productId", getProductDetails);
 productRouter.put(
   "/update/:_id",
   auth,
-  admin,
+  requirePermission("products:write"),
   upload.array("images", 10),
   updateProductDetails
 );
 
-productRouter.delete("/delete/:deleteId", auth, admin, deleteProduct);
+productRouter.delete("/delete/:deleteId", auth, requirePermission("products:write"), deleteProduct);
 
 productRouter.post("/search", searchProduct);
 
