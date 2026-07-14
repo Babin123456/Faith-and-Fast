@@ -121,35 +121,18 @@ export const getProductDetails = catchAsyncErrors(async (req, res) => {
     const { productId } = req.params;
 
     if (!productId) {
-      return res.status(400).json({
-        message: "Product ID is required",
-        error: true,
-        success: false,
-      });
+      return res.sendError(400, "VALIDATION_ERROR", "Product ID is required");
     }
 
     const product = await ProductModel.findById(productId).populate("category");
 
     if (!product) {
-      return res.status(404).json({
-        message: "Product not found",
-        error: true,
-        success: false,
-      });
+      return res.sendError(404, "PRODUCT_NOT_FOUND", "Product not found");
     }
 
-    return res.json({
-      message: "Product details",
-      data: product,
-      error: false,
-      success: true,
-    });
+    return res.sendSuccess(product, { message: "Product details" });
   } catch (error) {
-    return res.status(500).json({
-      message: error.message || error,
-      error: true,
-      success: false,
-    });
+    return res.sendError(500, "SERVER_ERROR", error.message || error);
   }
 });
 

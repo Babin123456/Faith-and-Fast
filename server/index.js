@@ -1,3 +1,9 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const buffer = require("buffer");
+if (!buffer.SlowBuffer) {
+  buffer.SlowBuffer = buffer.Buffer;
+}
 import cloudinary from "cloudinary";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -9,7 +15,8 @@ import securityMiddleware from "./middleware/security.js";
 import connectDB from "./config/connectDB.js";
 import validateEnv from "./config/validateEnv.js";
 import errorMiddleware from "./middleware/errorMiddleware.js";
-import requestContextMiddleware from "./middleware/requestContext.js";
+import responseWrapper from "./middleware/responseWrapper.js";
+import { initRedis } from "./utils/cache.js";
 dotenv.config();
 validateEnv();
 
@@ -26,7 +33,7 @@ const limiter = rateLimit({
 });
 
 const app = express();
-app.use(requestContextMiddleware);
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
@@ -48,6 +55,7 @@ app.use(
 );
 
 app.use(cookieParser());
+app.use(responseWrapper);
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
 securityMiddleware(app);
@@ -103,6 +111,7 @@ app.use("/api/review", reviewRouter);
 app.use(errorMiddleware);
 
 connectDB().then(() => {
+  initRedis().catch((err) => console.error("Redis init failed:", err));
   const server = app.listen(PORT, () =>
     console.log(`Server is running on port ${PORT}`)
   );
