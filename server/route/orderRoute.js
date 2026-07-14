@@ -15,17 +15,11 @@ import {
 import admin from "../middleware/Admin.js";
 import upload from "../middleware/multer.js";
 import { getOrderAnalytics } from "../controllers/analyticsController.js";
-import { cacheMiddleware, invalidateCache } from "../utils/cache.js";
+import { orderLimiter } from "../middleware/rateLimiter.js";
 
 const orderRouter = express.Router();
 
-const clearOrderCache = async (req, res, next) => {
-  await invalidateCache("products:*");
-  await invalidateCache("analytics:*");
-  next();
-};
-
-orderRouter.post("/create", auth, clearOrderCache, createOrder);
+orderRouter.post("/create", auth, orderLimiter, createOrder);
 
 orderRouter.post(
   "/upload-payment-screenshot",
