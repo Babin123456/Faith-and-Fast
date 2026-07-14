@@ -1,6 +1,7 @@
 import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import ProductModel from "../models/productModel.js";
 import { deleteImage, uploadImage } from "../utils/cloudinary.js";
+import { writeAuditLog } from "../utils/auditLogger.js";
 
 // Admin
 export const createProduct = catchAsyncErrors(async (req, res, next) => {
@@ -56,9 +57,25 @@ export const createProduct = catchAsyncErrors(async (req, res, next) => {
       stock: stock || 0,
       discount: discount || 0,
       images: uploadedImages,
+      user: req.user.id || req.user._id,
+      lastUpdatedBy: req.user.id || req.user._id,
     });
 
     const savedProduct = await product.save();
+
+    await writeAuditLog({
+      actorId: req.user.id || req.user._id,
+      actionType: "PRODUCT_CREATE",
+      targetType: "Product",
+      targetId: savedProduct._id,
+      beforeSnapshot: null,
+      afterSnapshot: {
+        name: savedProduct.name,
+        price: savedProduct.price,
+        stock: savedProduct.stock,
+        category: savedProduct.category,
+      },
+    });
 
     return res.status(201).json({
       message: "Product Created Successfully",
@@ -95,7 +112,8 @@ export const getProduct = catchAsyncErrors(async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate("category"),
+        .populate("category")
+        .populate("lastUpdatedBy", "name email"),
       ProductModel.countDocuments(query),
     ]);
 
@@ -124,7 +142,9 @@ export const getProductDetails = catchAsyncErrors(async (req, res) => {
       return res.sendError(400, "VALIDATION_ERROR", "Product ID is required");
     }
 
-    const product = await ProductModel.findById(productId).populate("category");
+    const product = await ProductModel.findById(productId)
+      .populate("category")
+      .populate("lastUpdatedBy", "name email");
 
     if (!product) {
       return res.sendError(404, "PRODUCT_NOT_FOUND", "Product not found");
@@ -188,6 +208,13 @@ export const updateProductDetails = catchAsyncErrors(async (req, res) => {
       );
     }
 
+    const beforeSnapshot = {
+      name: existingProduct.name,
+      price: existingProduct.price,
+      stock: existingProduct.stock,
+      category: existingProduct.category,
+    };
+
     const updateData = {
       ...(name && { name }),
       ...(description && { description }),
@@ -214,6 +241,7 @@ export const updateProductDetails = catchAsyncErrors(async (req, res) => {
       ...(stock !== undefined && { stock: Math.max(0, Number(stock)) }),
       ...(discount !== undefined && { discount: Number(discount) }),
       images: newImages,
+      lastUpdatedBy: req.user.id || req.user._id,
     };
 
     const updatedProduct = await ProductModel.findByIdAndUpdate(
@@ -224,6 +252,20 @@ export const updateProductDetails = catchAsyncErrors(async (req, res) => {
         runValidators: true,
       }
     );
+
+    await writeAuditLog({
+      actorId: req.user.id || req.user._id,
+      actionType: "PRODUCT_UPDATE",
+      targetType: "Product",
+      targetId: updatedProduct._id,
+      beforeSnapshot,
+      afterSnapshot: {
+        name: updatedProduct.name,
+        price: updatedProduct.price,
+        stock: updatedProduct.stock,
+        category: updatedProduct.category,
+      },
+    });
 
     return res.json({
       message: "Product updated successfully",
@@ -269,6 +311,20 @@ export const deleteProduct = catchAsyncErrors(async (req, res) => {
         product.images.map((img) => deleteImage(img.public_id))
       );
     }
+
+    await writeAuditLog({
+      actorId: req.user.id || req.user._id,
+      actionType: "PRODUCT_DELETE",
+      targetType: "Product",
+      targetId: product._id,
+      beforeSnapshot: {
+        name: product.name,
+        price: product.price,
+        stock: product.stock,
+        category: product.category,
+      },
+      afterSnapshot: null,
+    });
 
     return res.json({
       message: "Product deleted successfully.",

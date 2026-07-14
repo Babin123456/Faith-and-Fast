@@ -88,6 +88,10 @@ const productSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "User",
     },
+    lastUpdatedBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+    },
   },
 
   {

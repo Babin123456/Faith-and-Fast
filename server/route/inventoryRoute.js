@@ -1,6 +1,7 @@
 import express from "express";
 import auth from "../middleware/auth.js";
 import admin from "../middleware/Admin.js";
+import { requirePermission } from "../middleware/permission.js";
 import {
   getInventoryOverview,
   bulkUpdateStock,

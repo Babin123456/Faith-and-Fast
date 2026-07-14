@@ -139,6 +139,10 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    lastUpdatedBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+    },
   },
   {
     timestamps: true,

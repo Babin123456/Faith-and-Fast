@@ -737,11 +737,19 @@ export const updateUserRole = catchAsyncErrors(async (req, res) => {
       });
     }
 
-    const { email, role } = req.body;
+    const { email, role, permissions } = req.body;
 
     if (!role || !["USER", "ADMIN"].includes(role)) {
       return res.status(400).json({
         message: "Invalid role. Role must be either 'USER' or 'ADMIN'.",
+        error: true,
+        success: false,
+      });
+    }
+
+    if (permissions !== undefined && !Array.isArray(permissions)) {
+      return res.status(400).json({
+        message: "Permissions must be an array of strings",
         error: true,
         success: false,
       });
@@ -758,10 +766,13 @@ export const updateUserRole = catchAsyncErrors(async (req, res) => {
     }
 
     user.role = role;
+    if (permissions !== undefined) {
+      user.permissions = permissions;
+    }
     const updatedUser = await user.save();
 
     return res.json({
-      message: "User role updated successfully",
+      message: "User role and permissions updated successfully",
       error: false,
       success: true,
       data: updatedUser,
