@@ -4,7 +4,17 @@ const uploadImageController = async (req, res) => {
   try {
     const file = req.file;
 
-    const uploadResult = await uploadImage(file);
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      return res.status(400).json({
+        message: validation.message,
+        error: true,
+        success: false,
+      });
+    }
+
+    const uploadOptions = getCloudinaryUploadOptions();
+    const uploadResult = await uploadImage(file, uploadOptions);
 
     return res.json({
       message: "Image uploaded successfully",
