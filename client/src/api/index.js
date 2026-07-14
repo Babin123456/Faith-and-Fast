@@ -5,6 +5,18 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const correlationId =
+      (typeof window !== "undefined" && window.crypto?.randomUUID?.()) ||
+      "c-" + Math.random().toString(36).substring(2, 15);
+    config.headers["X-Correlation-Id"] = correlationId;
+    config.headers["X-Request-Id"] = correlationId;
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
