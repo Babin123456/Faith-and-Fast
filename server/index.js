@@ -9,14 +9,13 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import morgan from "morgan";
 import securityMiddleware from "./middleware/security.js";
 import connectDB from "./config/connectDB.js";
 import validateEnv from "./config/validateEnv.js";
-import errorMiddleware from "./middleware/errorMiddleware.js";
-import responseWrapper from "./middleware/responseWrapper.js";
-import { initRedis } from "./utils/cache.js";
+import errorMiddleware from "./middleware/error.js";
+import { generalLimiter } from "./middleware/rateLimiter.js";
 dotenv.config();
 validateEnv();
 
@@ -24,12 +23,6 @@ cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 2000,
-  message: "Too many requests, please try again later.",
 });
 
 const app = express();
@@ -58,8 +51,12 @@ app.use(cookieParser());
 app.use(responseWrapper);
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
-securityMiddleware(app);
-app.use(limiter);
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
+app.use(generalLimiter);
 app.use(morgan("combined"));
 app.use(errorMiddleware);
 app.disable("x-powered-by");

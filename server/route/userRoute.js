@@ -20,27 +20,27 @@ import {
 import auth from "../middleware/auth.js";
 import upload from "../middleware/multer.js";
 import admin from "../middleware/Admin.js";
-import authRateLimiter from "../middleware/authRateLimiter.js";
+import { authLimiter, passwordResetLimiter } from "../middleware/rateLimiter.js";
 
 const userRouter = express.Router();
 
-userRouter.post("/register", registerUser);
+userRouter.post("/register", authLimiter, registerUser);
 
-userRouter.post("/verify-email", verifyEmailOtp);
+userRouter.post("/verify-email", authLimiter, verifyEmailOtp);
 
-userRouter.post("/resend-otp", resendOtp);
+userRouter.post("/resend-otp", authLimiter, resendOtp);
 
-userRouter.post("/login", authRateLimiter, loginUser);
+userRouter.post("/login", authLimiter, loginUser);
 
 userRouter.get("/logout", logoutUser);
 
 userRouter.put("/upload-avatar", upload.single("avatar"), auth, uploadAvatar);
 
-userRouter.put("/forgot-password", authRateLimiter, forgotPassword);
+userRouter.put("/forgot-password", passwordResetLimiter, forgotPassword);
 
-userRouter.put("/verify-otp", authRateLimiter, verifyOtp);
+userRouter.put("/verify-otp", authLimiter, verifyOtp);
 
-userRouter.put("/reset-password", authRateLimiter, resetPassword);
+userRouter.put("/reset-password", passwordResetLimiter, resetPassword);
 
 userRouter.get("/me", auth, getUserDetails);
 
