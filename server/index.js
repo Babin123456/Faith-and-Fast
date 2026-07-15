@@ -65,6 +65,19 @@ app.get("/", (req, res) => {
   res.send("Server is running: " + PORT);
 });
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "UP", timestamp: new Date().toISOString() });
+});
+
+app.get("/ready", (req, res) => {
+  const isDbConnected = mongoose.connection.readyState === 1;
+  if (isDbConnected) {
+    res.status(200).json({ status: "UP", services: { database: "UP" } });
+  } else {
+    res.status(503).json({ status: "DOWN", services: { database: "DOWN" } });
+  }
+});
+
 //routes
 import addressRouter from "./route/addressRoute.js";
 import cartRouter from "./route/cartRoute.js";
@@ -96,6 +109,8 @@ app.use("/api/support", supportRouter);
 app.use("/api/user", userRouter);
 app.use("/api/wishlist", wishListRouter);
 app.use("/api/review", reviewRouter);
+
+app.use(errorMiddleware);
 
 connectDB().then(() => {
   startMonitoring(healthConfig.monitoringInterval);
