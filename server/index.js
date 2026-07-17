@@ -14,7 +14,7 @@ import morgan from "morgan";
 import securityMiddleware from "./middleware/security.js";
 import connectDB from "./config/connectDB.js";
 import validateEnv from "./config/validateEnv.js";
-import errorMiddleware from "./middleware/error.js";
+import errorMiddleware from "./middleware/errorMiddleware.js";
 import { generalLimiter } from "./middleware/rateLimiter.js";
 dotenv.config();
 validateEnv();
